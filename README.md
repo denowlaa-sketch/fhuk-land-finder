@@ -10,14 +10,14 @@ Off-market UK land sourcing for **Flipping Homes UK**. Discovery and AI qualific
 | Collectors | Python — `services/collector` |
 | Database | PostgreSQL — `db/migrations` |
 | Extraction / scoring | OpenAI API |
-| Search | Pluggable: Google CSE / Bing / recorded sample / fixtures |
+| Search | Pluggable: Google CSE / Bing / Reddit / UK forums / recorded / fixtures |
 
 ## Layout
 
 ```
 apps/web/                      Next.js leads list, detail, contact-status pipeline
 services/collector/            Keyword seed, search connectors, extract/score, dedupe
-services/collector/samples/    Recorded Google CSE / Bing-shaped JSON for offline runs
+services/collector/samples/    Recorded Google CSE / Bing / Reddit / UK forum JSON for offline runs
 db/migrations/                 SQL schema for leads (FHUK-NNNN refs)
 data/keywords/                 Greater Manchester phrase × town seed
 fixtures/                      Five hypothetical example posts
@@ -96,18 +96,32 @@ Equivalent with fixtures (full post text, skips keyword search loop):
 fhuk-collector run --fixtures ../../fixtures --write
 ```
 
+### Reddit / UK forums smoke
+
+```bash
+# Offline — no Reddit API keys (uses samples/search/reddit_gm.json)
+fhuk-collector run --provider reddit --limit-queries 8
+
+# Light UK property/self-build forum recorded threads
+fhuk-collector run --provider forums --limit-queries 6
+
+# Live Reddit (official OAuth client credentials)
+# set REDDIT_CLIENT_ID, REDDIT_CLIENT_SECRET, REDDIT_USER_AGENT
+fhuk-collector run --provider reddit --limit-queries 5 --write
+```
+
 ## What works without API keys vs with keys
 
 | Capability | No keys | With keys |
 | ---------- | ------- | --------- |
 | Keyword expand (GM) | Yes | Yes |
-| Search | `recorded` / `fixtures` / `stub` | `google` (CSE) or `bing` |
+| Search | `recorded` / `fixtures` / `stub` / `reddit` (recorded) / `forums` | `google`, `bing`, `reddit` (OAuth) |
 | Extract / score | Heuristic fallback | OpenAI (`OPENAI_API_KEY`) |
 | Dedupe + dry-run JSON | Yes | Yes |
 | Insert Postgres | Needs `DATABASE_URL` only | Same |
 | Dashboard list | Fixtures fallback | DB when `DATABASE_URL` set |
 
-`SEARCH_PROVIDER=auto` (default): Google if `GOOGLE_CSE_API_KEY` + `GOOGLE_CSE_CX`, else Bing if `BING_SEARCH_API_KEY`, else **recorded**.
+`SEARCH_PROVIDER=auto` (default): Google if `GOOGLE_CSE_API_KEY` + `GOOGLE_CSE_CX`, else Bing if `BING_SEARCH_API_KEY`, else **recorded**. Reddit/forums are explicit (`--provider reddit|forums`).
 
 Live Google/Bing hits use the result **snippet** as extract input (no page scrape in this phase). Treat ownership as provisional.
 
