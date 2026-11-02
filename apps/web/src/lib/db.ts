@@ -3,11 +3,42 @@ import type { Lead } from "./types";
 
 let pool: Pool | null = null;
 
+/** Hosted Postgres (Neon / Supabase / Vercel) needs TLS; local Docker usually does not. */
+function poolSsl(connectionString: string): boolean | { rejectUnauthorized: boolean } | undefined {
+  const lower = connectionString.toLowerCase();
+  if (
+    lower.includes("sslmode=disable") ||
+    lower.includes("localhost") ||
+    lower.includes("127.0.0.1")
+  ) {
+    return undefined;
+  }
+  if (
+    lower.includes("sslmode=require") ||
+    lower.includes("sslmode=verify") ||
+    lower.includes("neon.tech") ||
+    lower.includes("supabase.co") ||
+    lower.includes("postgres.vercel-storage.com") ||
+    process.env.PGSSL === "require" ||
+    process.env.VERCEL === "1"
+  ) {
+    // Managed providers terminate TLS; CA pinning is optional via PGSSLROOTCERT.
+    return { rejectUnauthorized: process.env.PGSSL_REJECT_UNAUTHORIZED === "true" };
+  }
+  return undefined;
+}
+
 export function getPool(): Pool | null {
   const url = process.env.DATABASE_URL;
   if (!url) return null;
   if (!pool) {
-    pool = new Pool({ connectionString: url });
+    pool = new Pool({
+      connectionString: url,
+      // Serverless-friendly: one client per isolate; prefer Neon/Supabase *pooled* URLs.
+      max: Number(process.env.PG_POOL_MAX ?? (process.env.VERCEL ? 1 : 10)),
+      ssl: poolSsl(url),
+      connectionTimeoutMillis: 10_000,
+    });
   }
   return pool;
 }
