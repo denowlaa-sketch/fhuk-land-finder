@@ -77,3 +77,44 @@ def expand_reddit_queries(
         for town in towns:
             queries.append(f"{phrase} {town}")
     return queries
+
+
+CLASSIFIEDS_EXTRA_PHRASES = [
+    "land for sale privately",
+    "garden plot private sale",
+    "no agents land",
+    "inherited land for sale",
+    "back garden for sale",
+    "building plot private",
+    "paddock for sale",
+    "self build plot",
+]
+
+
+def expand_classifieds_queries(
+    seed: dict[str, Any] | None = None,
+    *,
+    priority_towns: list[str] | None = None,
+) -> list[str]:
+    """Classifieds queries: seed + private-sale phrases × priority GM towns."""
+    data = seed or load_keywords()
+    region = str(data.get("region", "Greater Manchester"))
+    towns = priority_towns or [
+        "Manchester",
+        "Bolton",
+        "Oldham",
+        "Stockport",
+        "Wigan",
+        "Sale",
+        "Rochdale",
+        "Salford",
+    ]
+    phrases = list(
+        dict.fromkeys([*data.get("phrases", []), *CLASSIFIEDS_EXTRA_PHRASES])
+    )
+    queries: list[str] = []
+    for phrase in phrases:
+        queries.append(f"{phrase} {region}")
+        for town in towns:
+            queries.append(f"{phrase} {town}")
+    return queries

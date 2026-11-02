@@ -1,0 +1,48 @@
+{
+  "kind": "classifieds#recorded",
+  "notes": "Hypothetical Greater Manchester private landowner-style classified ads for Gumtree / Preloved / Freeads. Offline smoke only — not live scraped content. Agent-spam examples included for filter tests.",
+  "listings": [
+    {
+      "site": "gumtree",
+      "title": "Private sale — rear garden plot Bolton BL1 (no agents)",
+      "url": "https://example.invalid/gumtree/gm/bolton-garden-plot",
+      "body": "Landowner selling part of rear garden in Bolton BL1. Approx 0.15 acres with side access. No planning yet — private sale only, no agents. Text for details. Ideal self build / backland enquiry."
+    },
+    {
+      "site": "gumtree",
+      "title": "Building plots Manchester — Smith & Co Estate Agents",
+      "url": "https://example.invalid/gumtree/gm/agent-spam-manchester",
+      "body": "Call our office to arrange a viewing. Multiple plots on Rightmove. Estate agents specialising in development land. Feefo rated."
+    },
+    {
+      "site": "preloved",
+      "title": "Inherited yard / brownfield Oldham — private ad",
+      "url": "https://example.invalid/preloved/gm/oldham-yard",
+      "body": "Family inherited former builder's yard in Oldham OL8. About 0.3 acres hardstanding. Private sale, landowner selling, offers invited. No planning. Not listed with any agent."
+    },
+    {
+      "site": "preloved",
+      "title": "Garden land for sale Stockport SK3 — quiet private sale",
+      "url": "https://example.invalid/preloved/gm/stockport-garden",
+      "body": "Back garden plot Stockport. Owner testing interest in a private sale. Access needs checking. No planning. Prefer local self-builder over agents."
+    },
+    {
+      "site": "freeads",
+      "title": "Paddock Wigan WN2 — amenity land (not a building plot)",
+      "url": "https://example.invalid/freeads/gm/wigan-paddock",
+      "body": "1 acre paddock on Wigan fringe. Seller says green belt / agricultural only — not a building plot. Asking mid five figures. Private ad from landowner."
+    },
+    {
+      "site": "freeads",
+      "title": "Sale Trafford garden with outline planning — private sale",
+      "url": "https://example.invalid/freeads/gm/sale-outline",
+      "body": "Rear garden in Sale (Trafford) with outline planning for one dwelling. Approx 320 sq m. Guide £220k. Private sale — landowner, no agents please."
+    },
+    {
+      "site": "gumtree",
+      "title": "Infill gap rumour Rochdale — might sell",
+      "url": "https://example.invalid/gumtree/gm/rochdale-infill",
+      "body": "Small infill gap Rochdale. Neighbour said owner might sell. No phone number on the ad, no price. Ownership not confirmed — investigate only."
+    }
+  ]
+}

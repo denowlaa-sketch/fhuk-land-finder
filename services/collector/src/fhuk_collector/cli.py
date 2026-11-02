@@ -11,7 +11,12 @@ from dotenv import load_dotenv
 from .connectors import available_providers, resolve_connector
 from .dedupe import is_duplicate
 from .extract import from_fixture_expected
-from .keywords import expand_queries, expand_reddit_queries, load_keywords
+from .keywords import (
+    expand_classifieds_queries,
+    expand_queries,
+    expand_reddit_queries,
+    load_keywords,
+)
 from .pipeline import run_pipeline
 
 
@@ -75,11 +80,13 @@ def cmd_run(args: argparse.Namespace) -> int:
         recorded_path=Path(args.recorded).resolve() if args.recorded else None,
     )
 
-    # Reddit/forums use phrase sets aligned with the keyword library (+ extras).
+    # Source-specific phrase sets aligned with the keyword library (+ extras).
     resolved_provider = getattr(connector, "name", provider or "")
     custom_queries = None
     if resolved_provider in {"reddit", "forums"}:
         custom_queries = expand_reddit_queries()
+    elif resolved_provider in {"classifieds", "gumtree", "preloved", "freeads"}:
+        custom_queries = expand_classifieds_queries()
 
     conn = None
     if not dry_run:
