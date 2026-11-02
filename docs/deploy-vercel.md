@@ -8,10 +8,10 @@ No secrets belong in git. Set connection strings and API keys only in the Vercel
 
 This error means Vercel is building from the **repo root** (or another folder without `next` in `package.json`). The Next.js dependency lives only in `apps/web/package.json`.
 
-**Required (Vercel UI — do this even if `vercel.json` looks correct):**
+**Required — Vercel Project Settings UI only** (`rootDirectory` is **not** a valid `vercel.json` key; setting it fails schema validation):
 
 1. Open the project → **Settings → Build and Deployment → Root Directory**
-2. Set Root Directory to **`apps/web`** (Edit → select `apps/web` → Save)
+2. Set Root Directory to **`apps/web`** (Edit → select `apps/web` → Save). This **must** be done in the UI.
 3. Framework Preset: **Next.js**
 4. Leave Install / Build as defaults once Root Directory is `apps/web`:
    - Install: `npm ci` (or `npm install`)
@@ -19,15 +19,14 @@ This error means Vercel is building from the **repo root** (or another folder wi
    - Output: leave as Next.js default (do not set a static export directory)
 5. Redeploy (Deployments → … → Redeploy), or push a new commit
 
-Repo helpers (not a substitute for the UI setting on an already-imported project):
+Repo helpers (not a substitute for the UI Root Directory setting):
 
 | File | Purpose |
 | ---- | ------- |
-| `/vercel.json` | Declares `"rootDirectory": "apps/web"` + Next.js / `lhr1` |
-| `/apps/web/vercel.json` | App-level framework, `npm ci` / `npm run build`, region `lhr1` |
+| `/apps/web/vercel.json` | Framework Next.js, `npm ci` / `npm run build`, region `lhr1` — used when Root Directory is `apps/web` |
 | `/apps/web/package.json` | Declares `next` (required for version detection) |
 
-Do **not** point Root Directory at `.` / repo root. Root `package.json` has no `next` dependency — that produces `NEXT_NO_VERSION`.
+Do **not** point Root Directory at `.` / repo root. Root `package.json` has no `next` dependency — that produces `NEXT_NO_VERSION`. Do not add `"rootDirectory"` to any `vercel.json`.
 
 ## Prerequisites
 
@@ -72,15 +71,15 @@ psql "$POSTGRES_URL_NON_POOLING" -f db/migrations/001_leads.sql
 ## 2. Import the project on Vercel
 
 1. [vercel.com/new](https://vercel.com/new) → Import `denowlaa-sketch/fhuk-land-finder`.
-2. **Root Directory**: set to `apps/web` (required — monorepo). Confirm again under **Settings → Build and Deployment** after import.
-3. Framework preset: **Next.js** (auto from `vercel.json` / `apps/web/package.json`).
+2. **Root Directory**: set to `apps/web` in the Vercel UI (required — monorepo). Confirm again under **Settings → Build and Deployment** after import. Cannot be set via `vercel.json`.
+3. Framework preset: **Next.js** (auto from `apps/web/vercel.json` / `apps/web/package.json`).
 4. Build settings (defaults are correct when Root Directory is `apps/web`):
    - Install: `npm ci` (or `npm install`) — runs inside `apps/web`
    - Build: `npm run build` — runs `next build` from `apps/web`
    - Output: Next.js default (do not set a static export)
-5. Deploy region preference is `lhr1` (London) via `vercel.json`.
+5. Deploy region preference is `lhr1` (London) via `apps/web/vercel.json`.
 
-Do **not** point Root Directory at the repo root. The web app owns its lockfile and `next` dependency under `apps/web`. If you already imported with Root Directory `.`, change it to `apps/web` and redeploy (see troubleshooting at the top).
+Do **not** point Root Directory at the repo root. The web app owns its lockfile and `next` dependency under `apps/web`. If you already imported with Root Directory `.`, change it to `apps/web` in Project Settings and redeploy (see troubleshooting at the top).
 
 ## 3. Environment variables
 
