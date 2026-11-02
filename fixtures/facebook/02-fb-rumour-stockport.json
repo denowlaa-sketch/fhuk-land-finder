@@ -1,0 +1,15 @@
+{
+  "id": "fixture-fb-rumour-stockport",
+  "title": "Hypothetical Facebook comment — Stockport rumour",
+  "source": "facebook_paste",
+  "original_post_url": "https://www.facebook.com/groups/example.invalid/posts/10002",
+  "raw_text": "Someone on my street in Stockport said their neighbour might sell a bit of garden for a plot. Not sure if it's true and I don't have a number. Just sharing in case anyone knows more.",
+  "expected": {
+    "location": "Stockport",
+    "opportunity_type": "garden_plot",
+    "ownership_confidence": "possible",
+    "ai_assessment": "Investigate",
+    "contact": null
+  },
+  "notes": "Rumour only — must not assume ownership or sale intent."
+}

@@ -83,6 +83,68 @@ main {
   color: var(--muted);
 }
 
+.site-nav {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  font-size: 0.95rem;
+}
+
+.site-nav a {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.site-nav a:hover {
+  color: var(--accent);
+}
+
+.paste-panel {
+  max-width: 42rem;
+}
+
+.paste-label {
+  display: block;
+  margin: 1rem 0 0.35rem;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.paste-input,
+.paste-textarea {
+  width: 100%;
+  font: inherit;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  color: var(--ink);
+}
+
+.paste-textarea {
+  resize: vertical;
+  line-height: 1.45;
+}
+
+.status-form button.secondary {
+  background: var(--panel);
+  color: var(--ink);
+  border-color: var(--line);
+}
+
+.status-form button.secondary:hover {
+  background: #f7f2e8;
+  color: var(--ink);
+}
+
+.paste-result {
+  margin-top: 1.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--line);
+}
+
 h1,
 h2 {
   font-family: var(--font-display);

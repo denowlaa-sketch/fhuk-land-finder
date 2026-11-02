@@ -106,6 +106,60 @@ def cmd_run(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_analyze_paste(args: argparse.Namespace) -> int:
+    from .facebook_paste import analyze_paste
+
+    dry_run = _resolve_dry_run(args)
+
+    if args.fixture:
+        path = Path(args.fixture).resolve()
+        data = json.loads(path.read_text(encoding="utf-8"))
+        lead = analyze_paste(
+            text=data["raw_text"],
+            url=data.get("original_post_url"),
+            title=data.get("title"),
+        )
+        payload: dict = {
+            "fixture": path.name,
+            "lead": lead.to_dict(),
+            "note": "URL is metadata only — never fetched.",
+        }
+    else:
+        if not args.text:
+            print(
+                json.dumps(
+                    {
+                        "error": "Provide --text or --fixture. "
+                        "Facebook URLs are not fetched or scraped."
+                    }
+                ),
+                file=sys.stderr,
+            )
+            return 2
+        lead = analyze_paste(text=args.text, url=args.url)
+        payload = {
+            "lead": lead.to_dict(),
+            "note": "URL is metadata only — never fetched.",
+        }
+
+    if dry_run:
+        payload["status"] = "dry_run"
+        print(json.dumps(payload, indent=2, default=str))
+        return 0
+
+    from . import db as dbmod
+
+    conn = dbmod.connect()
+    try:
+        saved = dbmod.upsert_lead_by_url(conn, lead)
+        payload["status"] = "inserted" if saved.get("created") else "updated"
+        payload.update(saved)
+    finally:
+        conn.close()
+    print(json.dumps(payload, indent=2, default=str))
+    return 0
+
+
 def cmd_seed_fixtures(args: argparse.Namespace) -> int:
     fixtures_dir = Path(args.fixtures).resolve()
     dry_run = _resolve_dry_run(args)
@@ -207,6 +261,31 @@ def build_parser() -> argparse.ArgumentParser:
         help="Write leads to Postgres (requires DATABASE_URL)",
     )
     p_run.set_defaults(func=cmd_run)
+
+    p_paste = sub.add_parser(
+        "analyze-paste",
+        help="Analyse a pasted Facebook URL + post text (no scrape/fetch)",
+    )
+    p_paste.add_argument("--url", default=None, help="Public Facebook post URL (not fetched)")
+    p_paste.add_argument("--text", default=None, help="Pasted post body")
+    p_paste.add_argument(
+        "--fixture",
+        default=None,
+        help="Path to a fixtures/facebook/*.json file",
+    )
+    p_paste.add_argument(
+        "--dry-run",
+        dest="dry_run",
+        action="store_true",
+        default=None,
+    )
+    p_paste.add_argument(
+        "--write",
+        dest="dry_run",
+        action="store_false",
+        help="Upsert lead into Postgres",
+    )
+    p_paste.set_defaults(func=cmd_analyze_paste)
 
     p_seed = sub.add_parser(
         "seed-fixtures",

@@ -1,0 +1,14 @@
+{
+  "id": "fixture-fb-agent-reject",
+  "title": "Hypothetical Facebook ad — agent listing",
+  "source": "facebook_paste",
+  "original_post_url": "https://www.facebook.com/marketplace/item/example.invalid/10003",
+  "raw_text": "BUILDING PLOT FOR SALE — marketed by Example Estates Agency. Call the office on 0161 000 0000. Full brochure on our website. Not a private landowner sale.",
+  "expected": {
+    "opportunity_type": "other",
+    "ownership_confidence": "unknown",
+    "ai_assessment": "Reject",
+    "contact": "0161 000 0000"
+  },
+  "notes": "Agent listing — Reject. Phone is voluntarily published so may appear in contact, but assessment must Reject."
+}

@@ -110,12 +110,30 @@ fhuk-collector run --provider forums --limit-queries 6
 fhuk-collector run --provider reddit --limit-queries 5 --write
 ```
 
+### Facebook paste (compliant — no scrape)
+
+Dashboard: open [http://localhost:3000/paste](http://localhost:3000/paste), paste a public Facebook URL (optional) **and** the post text you copied → Analyse (or Analyse & save lead).
+
+CLI helper:
+
+```bash
+fhuk-collector analyze-paste \
+  --fixture ../../fixtures/facebook/01-fb-bolton-garden.json
+
+fhuk-collector analyze-paste \
+  --url 'https://www.facebook.com/groups/example.invalid/posts/1' \
+  --text 'We own a house in Bolton and may sell the rear garden…'
+```
+
+The URL is stored as metadata only — **never fetched**. No Graph API, no group scrapers. Ownership/sale intent are not assumed from the link alone. Contacts only if voluntarily present in the pasted text. Labels: Strong / Investigate / Reject.
+
 ## What works without API keys vs with keys
 
 | Capability | No keys | With keys |
 | ---------- | ------- | --------- |
 | Keyword expand (GM) | Yes | Yes |
 | Search | `recorded` / `fixtures` / `stub` / `reddit` (recorded) / `forums` | `google`, `bing`, `reddit` (OAuth) |
+| Facebook paste | Heuristic analyse + preview; save needs DB | OpenAI extract when `OPENAI_API_KEY` set |
 | Extract / score | Heuristic fallback | OpenAI (`OPENAI_API_KEY`) |
 | Dedupe + dry-run JSON | Yes | Yes |
 | Insert Postgres | Needs `DATABASE_URL` only | Same |
@@ -133,5 +151,5 @@ cd services/collector && pytest
 
 ## Scope notes
 
-- In scope: GM keyword → pluggable public search → AI extract/score → dedupe → Postgres → dashboard refresh
-- Out of scope: unofficial Facebook scraping, paid mapping/planning APIs, automated outreach, auctions
+- In scope: GM keyword → pluggable public search → AI extract/score → dedupe → Postgres → dashboard refresh; Facebook **paste** analysis (no fetch)
+- Out of scope: unofficial Facebook scraping / Graph mass search, classifieds (later), paid mapping/planning APIs, automated outreach, auctions
