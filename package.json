@@ -2,7 +2,7 @@
   "name": "fhuk-land-finder",
   "version": "0.1.0",
   "private": true,
-  "description": "Flipping Homes UK — off-market land sourcing (Phase 0)",
+  "description": "Flipping Homes UK — off-market land sourcing. Next.js app is apps/web (set Vercel Root Directory to apps/web).",
   "scripts": {
     "dev": "npm --prefix apps/web run dev",
     "build": "npm --prefix apps/web run build",
@@ -13,3 +13,4 @@
     "node": ">=20"
   }
 }
+

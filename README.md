@@ -205,9 +205,12 @@ Production dashboard is **`apps/web`** on Vercel. Full checklist (Root Directory
 Quick path:
 
 1. Create hosted Postgres → run `psql "$DATABASE_URL" -f db/migrations/001_leads.sql` once.
-2. Import this repo on Vercel → set **Root Directory** to `apps/web`.
-3. Set env vars (no secrets in git): `DATABASE_URL` (pooled + `sslmode=require`), optional `OPENAI_API_KEY`.
-4. Deploy; open `/leads` and confirm source is PostgreSQL.
+2. Import this repo on Vercel → set **Root Directory** to `apps/web` (Settings → Build and Deployment). Repo `vercel.json` also declares `"rootDirectory": "apps/web"`.
+3. Framework **Next.js**; Install `npm ci` / Build `npm run build` (defaults once Root Directory is correct).
+4. Set env vars (no secrets in git): `DATABASE_URL` (pooled + `sslmode=require`), optional `OPENAI_API_KEY`.
+5. Deploy; open `/leads` and confirm source is PostgreSQL.
+
+If deploy fails with `[NEXT_NO_VERSION] No Next.js version detected`, Root Directory is still the repo root — set it to `apps/web` and redeploy. See **[docs/deploy-vercel.md](docs/deploy-vercel.md)**.
 
 Local production build: `cd apps/web && npm ci && npm run build`.
 
