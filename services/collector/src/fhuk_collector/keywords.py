@@ -118,3 +118,44 @@ def expand_classifieds_queries(
         for town in towns:
             queries.append(f"{phrase} {town}")
     return queries
+
+
+AUCTIONS_EXTRA_PHRASES = [
+    "building plot auction",
+    "development land lot",
+    "self build plot",
+    "garden plot auction",
+    "paddock for sale auction",
+    "land with planning permission",
+    "brownfield development land",
+    "outline planning plot",
+]
+
+
+def expand_auctions_queries(
+    seed: dict[str, Any] | None = None,
+    *,
+    priority_towns: list[str] | None = None,
+) -> list[str]:
+    """Auction / specialist-plot queries: seed + lot phrases × priority GM towns."""
+    data = seed or load_keywords()
+    region = str(data.get("region", "Greater Manchester"))
+    towns = priority_towns or [
+        "Manchester",
+        "Bolton",
+        "Oldham",
+        "Stockport",
+        "Wigan",
+        "Sale",
+        "Rochdale",
+        "Salford",
+    ]
+    phrases = list(
+        dict.fromkeys([*data.get("phrases", []), *AUCTIONS_EXTRA_PHRASES])
+    )
+    queries: list[str] = []
+    for phrase in phrases:
+        queries.append(f"{phrase} {region}")
+        for town in towns:
+            queries.append(f"{phrase} {town}")
+    return queries

@@ -13,11 +13,13 @@ Python worker: Greater Manchester keywords → pluggable public web search → O
 | `forums` | — | Light UK property/self-build forum recorded threads |
 | `classifieds` | — (optional CSE keys if live) | Gumtree + Preloved + Freeads |
 | `gumtree` / `preloved` / `freeads` | — | Per-site classifieds |
+| `auctions` | — (optional CSE keys if live) | Auction House + SDL + EG + Plotfinder + PlotBrowser |
+| `auctionhouse` / `sdl` / `eg` / `plotfinder` / `plotbrowser` | — | Per-site auctions / specialist plots |
 | `recorded` | — | Offline `samples/search/google_cse_gm.json` |
 | `fixtures` | — | Repo `fixtures/` with full post text |
 | `stub` | — | Synthetic `example.invalid` URLs |
 
-No unofficial Facebook scrapers. Reddit/forums/classifieds are **explicit** providers (not selected by `auto`).
+No unofficial Facebook scrapers. Reddit/forums/classifieds/auctions are **explicit** providers (not selected by `auto`).
 
 ## Classifieds (Gumtree / Preloved / Freeads)
 
@@ -36,6 +38,23 @@ fhuk-collector run --provider freeads --limit-queries 5
 fhuk-collector run --provider classifieds --write
 ```
 
+## Auctions + specialist land
+
+**Default = offline recorded samples** (`samples/search/auctions_gm.json`) with GM/UK land auction lots and specialist plot ads. Residential house-lot noise is filtered.
+
+**Live (optional):** set `AUCTIONS_LIVE=true` plus `GOOGLE_CSE_API_KEY` / `GOOGLE_CSE_CX`. Uses Google CSE `site:auctionhouse.co.uk` (etc.) queries only — **no HTML scrape** of auction/plot catalogue pages.
+
+```bash
+# Offline smoke
+fhuk-collector run --provider auctions --limit-queries 8
+fhuk-collector run --provider auctionhouse --limit-queries 5
+fhuk-collector run --provider sdl --limit-queries 5
+fhuk-collector run --provider plotfinder --limit-queries 5
+
+# Persist when Postgres is ready
+fhuk-collector run --provider auctions --write
+```
+
 ## Commands
 
 ```bash
@@ -51,6 +70,7 @@ fhuk-collector run --provider recorded --limit-queries 10
 fhuk-collector run --provider reddit --limit-queries 8
 fhuk-collector run --provider forums --limit-queries 6
 fhuk-collector run --provider classifieds --limit-queries 8
+fhuk-collector run --provider auctions --limit-queries 8
 
 # Live Reddit when OAuth app credentials are set
 fhuk-collector run --provider reddit --limit-queries 5 --write
@@ -90,4 +110,5 @@ fhuk-collector analyze-paste --fixture ../../fixtures/facebook/01-fb-bolton-gard
 - `samples/search/reddit_gm.json` — recorded Reddit-style GM land posts
 - `samples/search/uk_forums_gm.json` — light UK forum recorded threads
 - `samples/search/classifieds_gm.json` — Gumtree / Preloved / Freeads GM ads
+- `samples/search/auctions_gm.json` — UK auction / Plotfinder / PlotBrowser GM land lots
 - `../../fixtures/facebook/*.json` — hypothetical Facebook paste fixtures

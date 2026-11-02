@@ -3,6 +3,15 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+from .auctions import (
+    AuctionHouseSearchConnector,
+    AuctionsSearchConnector,
+    EgAuctionsSearchConnector,
+    PlotbrowserSearchConnector,
+    PlotfinderSearchConnector,
+    SdlAuctionsSearchConnector,
+    default_auctions_recorded_path,
+)
 from .base import SearchConnector
 from .bing import BingSearchConnector
 from .classifieds import (
@@ -36,6 +45,15 @@ def available_providers() -> dict[str, str]:
         "gumtree": "Gumtree-only classifieds (recorded / optional CSE site:)",
         "preloved": "Preloved-only classifieds (recorded / optional CSE site:)",
         "freeads": "Freeads-only classifieds (recorded / optional CSE site:)",
+        "auctions": (
+            "UK auction catalogues + Plotfinder/PlotBrowser recorded GM lots; "
+            "optional CSE site: live"
+        ),
+        "auctionhouse": "Auction House-only (recorded / optional CSE site:)",
+        "sdl": "SDL Auctions-only (recorded / optional CSE site:)",
+        "eg": "EG Property Auctions-only (recorded / optional CSE site:)",
+        "plotfinder": "Plotfinder specialist plots (recorded / optional CSE site:)",
+        "plotbrowser": "PlotBrowser specialist plots (recorded / optional CSE site:)",
         "recorded": "Offline replay of samples/search/*.json (default without keys)",
         "fixtures": "Offline fixture posts with full raw text",
         "stub": "Synthetic example.invalid URLs (no content)",
@@ -53,7 +71,7 @@ def resolve_connector(
     Resolve a search connector.
 
     provider=auto (default): google if keys, else bing if key, else recorded.
-    Reddit/forums/classifieds are explicit providers (not part of auto).
+    Reddit/forums/classifieds/auctions are explicit providers (not part of auto).
     """
     chosen = (provider or os.getenv("SEARCH_PROVIDER") or "auto").lower().strip()
     fixtures = fixtures_dir or (_repo_root() / "fixtures")
@@ -88,6 +106,24 @@ def resolve_connector(
     if chosen == "freeads":
         path = recorded_path or default_classifieds_recorded_path()
         return FreeadsSearchConnector(recorded_path=path)
+    if chosen == "auctions":
+        path = recorded_path or default_auctions_recorded_path()
+        return AuctionsSearchConnector(recorded_path=path)
+    if chosen == "auctionhouse":
+        path = recorded_path or default_auctions_recorded_path()
+        return AuctionHouseSearchConnector(recorded_path=path)
+    if chosen == "sdl":
+        path = recorded_path or default_auctions_recorded_path()
+        return SdlAuctionsSearchConnector(recorded_path=path)
+    if chosen == "eg":
+        path = recorded_path or default_auctions_recorded_path()
+        return EgAuctionsSearchConnector(recorded_path=path)
+    if chosen == "plotfinder":
+        path = recorded_path or default_auctions_recorded_path()
+        return PlotfinderSearchConnector(recorded_path=path)
+    if chosen == "plotbrowser":
+        path = recorded_path or default_auctions_recorded_path()
+        return PlotbrowserSearchConnector(recorded_path=path)
     if chosen == "recorded":
         return RecordedSearchConnector(recorded)
     if chosen == "fixtures":

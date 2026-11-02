@@ -12,6 +12,7 @@ from .connectors import available_providers, resolve_connector
 from .dedupe import is_duplicate
 from .extract import from_fixture_expected
 from .keywords import (
+    expand_auctions_queries,
     expand_classifieds_queries,
     expand_queries,
     expand_reddit_queries,
@@ -87,6 +88,15 @@ def cmd_run(args: argparse.Namespace) -> int:
         custom_queries = expand_reddit_queries()
     elif resolved_provider in {"classifieds", "gumtree", "preloved", "freeads"}:
         custom_queries = expand_classifieds_queries()
+    elif resolved_provider in {
+        "auctions",
+        "auctionhouse",
+        "sdl",
+        "eg",
+        "plotfinder",
+        "plotbrowser",
+    }:
+        custom_queries = expand_auctions_queries()
 
     conn = None
     if not dry_run:

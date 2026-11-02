@@ -1,0 +1,60 @@
+{
+  "kind": "auctions#recorded",
+  "notes": "Hypothetical Greater Manchester / NW UK land auction lots and specialist plot listings for Auction House, SDL, EG Property Auctions, Plotfinder, and PlotBrowser. Offline smoke only — not live scraped content. Residential house-lot noise included for filter tests.",
+  "listings": [
+    {
+      "site": "auctionhouse",
+      "title": "Lot 12 — Building plot with outline PP, Bolton BL1",
+      "url": "https://example.invalid/auctionhouse/gm/lot-12-bolton-plot",
+      "body": "Freehold building plot in Bolton BL1. Approx 0.18 acres with outline planning permission for one dwelling. Guide price £95,000. Side access confirmed. Auction House North West catalogue — development land / self build opportunity."
+    },
+    {
+      "site": "auctionhouse",
+      "title": "Lot 4 — 3 bed semi-detached investment, Manchester M9",
+      "url": "https://example.invalid/auctionhouse/gm/lot-4-manchester-semi",
+      "body": "Tenanted investment — 3 bedroom semi-detached house in Manchester M9. Buy-to-let HMO investment potential. Leasehold flat also available in same catalogue. Not land."
+    },
+    {
+      "site": "sdl",
+      "title": "Lot 27 — Brownfield yard / development land, Oldham OL8",
+      "url": "https://example.invalid/sdl/gm/lot-27-oldham-yard",
+      "body": "Former builder's yard in Oldham OL8. About 0.35 acres hardstanding brownfield. Freehold land offered at auction. Guide £120,000. SDL Auctions — suitable for development subject to planning. No residential dwelling on site."
+    },
+    {
+      "site": "sdl",
+      "title": "Lot 9 — Rear garden plot Stockport SK3 (infill)",
+      "url": "https://example.invalid/sdl/gm/lot-9-stockport-garden",
+      "body": "Infill garden plot Stockport SK3. Guide price £55,000. Auction catalogue notes potential for a single dwelling; planning not yet obtained. Land with side access — backland / garden plot."
+    },
+    {
+      "site": "eg",
+      "title": "Lot 41 — Amenity paddock, Wigan WN2 (green belt)",
+      "url": "https://example.invalid/eg/gm/lot-41-wigan-paddock",
+      "body": "1.1 acre paddock / amenity land on Wigan fringe. EG Property Auctions. Seller states green belt — agricultural / amenity only, not a building plot. Guide mid five figures. Freehold land."
+    },
+    {
+      "site": "eg",
+      "title": "Lot 3 — Sale Trafford garden with outline planning",
+      "url": "https://example.invalid/eg/gm/lot-3-sale-outline",
+      "body": "Rear garden plot in Sale (Trafford) with outline planning permission for one dwelling. Approx 320 sq m. Guide £210,000. EG catalogue — self build / building plot."
+    },
+    {
+      "site": "plotfinder",
+      "title": "Self build plot Rochdale — Plotfinder listing",
+      "url": "https://example.invalid/plotfinder/gm/rochdale-selfbuild",
+      "body": "Single self-build building plot Rochdale. Approx 350 sq m. Outline planning for one house. Asking £140k via Plotfinder. Specialist development-land listing — not an estate-agent brochure dump."
+    },
+    {
+      "site": "plotbrowser",
+      "title": "Salford backland plot — PlotBrowser",
+      "url": "https://example.invalid/plotbrowser/gm/salford-backland",
+      "body": "Backland / garden plot Salford. Owner exploring sale via PlotBrowser. No planning yet. Size ~0.12 acres. Useful for Greater Manchester self-build enquiries; ownership claims treat as possible until verified."
+    },
+    {
+      "site": "plotfinder",
+      "title": "2 bed flat Manchester city — investment",
+      "url": "https://example.invalid/plotfinder/gm/noise-manchester-flat",
+      "body": "Leasehold flat — 2 bedroom apartment Manchester city centre. Buy-to-let investment. Mistakenly tagged on a plot site; residential dwelling only."
+    }
+  ]
+}
