@@ -60,9 +60,21 @@ REDDIT_ALLOW_PUBLIC_JSON=false
 
 Create a Reddit “script” or “web” app at https://www.reddit.com/prefs/apps and use client credentials grant.
 
+## Facebook paste (no scrape)
+
+```bash
+# Hypothetical fixture
+fhuk-collector analyze-paste --fixture ../../fixtures/facebook/02-fb-rumour-stockport.json
+
+# Manual paste — URL is metadata only (never fetched)
+fhuk-collector analyze-paste --url 'https://www.facebook.com/…' --text '…pasted post…'
+fhuk-collector analyze-paste --fixture ../../fixtures/facebook/01-fb-bolton-garden.json --write
+```
+
 ## Samples
 
 - `samples/search/google_cse_gm.json` — recorded CSE-shaped payload
 - `samples/search/bing_gm.json` — Bing-shaped reference sample
 - `samples/search/reddit_gm.json` — recorded Reddit-style GM land posts
 - `samples/search/uk_forums_gm.json` — light UK forum recorded threads
+- `../../fixtures/facebook/*.json` — hypothetical Facebook paste fixtures

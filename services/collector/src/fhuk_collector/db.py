@@ -83,4 +83,53 @@ def insert_lead(conn, lead: ExtractedLead) -> dict[str, Any]:
         )
         row = cur.fetchone()
     conn.commit()
-    return {"id": str(row[0]), "ref": row[1]}
+    return {"id": str(row[0]), "ref": row[1], "created": True}
+
+
+def upsert_lead_by_url(conn, lead: ExtractedLead) -> dict[str, Any]:
+    """Update an existing lead with the same original_post_url, else insert."""
+    if lead.original_post_url:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE leads SET
+                  location = %s,
+                  opportunity_type = %s::opportunity_type,
+                  land_size = %s,
+                  asking_price = %s,
+                  planning_status = %s::planning_status,
+                  source = %s,
+                  landowner_name = %s,
+                  contact = %s,
+                  ownership_confidence = %s::ownership_confidence,
+                  seller_motivation = %s,
+                  ai_assessment = %s::ai_assessment,
+                  ai_rationale = %s,
+                  raw_excerpt = %s,
+                  content_hash = %s
+                WHERE original_post_url = %s
+                RETURNING id, ref
+                """,
+                (
+                    lead.location,
+                    lead.opportunity_type,
+                    lead.land_size,
+                    lead.asking_price,
+                    lead.planning_status,
+                    lead.source,
+                    lead.landowner_name,
+                    lead.contact,
+                    lead.ownership_confidence,
+                    lead.seller_motivation,
+                    lead.ai_assessment,
+                    lead.ai_rationale,
+                    lead.raw_excerpt,
+                    lead.content_hash,
+                    lead.original_post_url,
+                ),
+            )
+            row = cur.fetchone()
+        if row:
+            conn.commit()
+            return {"id": str(row[0]), "ref": row[1], "created": False}
+    return insert_lead(conn, lead)

@@ -33,7 +33,9 @@ export default async function LeadsPage() {
         {source === "database" ? "PostgreSQL" : "fixtures (no DATABASE_URL)"}.
         {source === "database"
           ? " Refresh after fhuk-collector run --write to see new rows."
-          : " Set DATABASE_URL and migrate to load ingested leads."}
+          : " Set DATABASE_URL and migrate to load ingested leads."}{" "}
+        <Link href="/paste">Paste a Facebook post</Link> to analyse without
+        scraping.
       </p>
 
       {leads.length === 0 ? (

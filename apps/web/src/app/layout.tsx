@@ -33,7 +33,10 @@ export default function RootLayout({
               Flipping Homes UK
               <span>Land Finder — discovery &amp; qualification</span>
             </a>
-            <div className="meta-pill">Phase 0</div>
+            <nav className="site-nav" aria-label="Primary">
+              <a href="/leads">Leads</a>
+              <a href="/paste">Facebook paste</a>
+            </nav>
           </header>
           {children}
         </main>

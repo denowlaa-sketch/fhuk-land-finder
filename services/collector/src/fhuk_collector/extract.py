@@ -56,16 +56,48 @@ def _heuristic_location(hit: SearchHit) -> str:
     return hit.query or "Unknown UK"
 
 
+def _extract_voluntary_contact(raw: str) -> str | None:
+    """Only return phone/email tokens that appear in the pasted text."""
+    email = re.search(r"\b[\w.+-]+@[\w.-]+\.\w+\b", raw)
+    if email:
+        return email.group(0)
+    phone = re.search(r"\b(?:0|\+44)[\d\s-]{9,}\b", raw)
+    if phone:
+        return re.sub(r"\s+", " ", phone.group(0)).strip()
+    return None
+
+
 def _heuristic_extract(hit: SearchHit) -> dict[str, Any]:
     """Offline fallback when OPENAI_API_KEY is unset — keyword heuristics only."""
-    text = (hit.raw_text or hit.snippet or "").lower()
+    raw = hit.raw_text or hit.snippet or ""
+    text = raw.lower()
     assessment = "Investigate"
     rationale = "Heuristic fallback (no OpenAI key) — ownership not confirmed."
     ownership: str = "possible"
-    if any(w in text for w in ("green belt", "not a building plot", "agricultural only")):
+
+    agentish = any(
+        w in text
+        for w in (
+            "estate agency",
+            "estates agency",
+            "estate agent",
+            "marketed by",
+            "not a private landowner",
+            "call the office",
+        )
+    )
+    if agentish:
+        assessment = "Reject"
+        ownership = "unknown"
+        rationale = "Heuristic: agent / marketed listing — not treated as off-market landowner."
+    elif any(w in text for w in ("green belt", "not a building plot", "agricultural only")):
         assessment = "Reject"
         rationale = "Heuristic: explicit non-development / amenity-only signal."
         ownership = "likely" if "seller says" in text or "selling as" in text else "possible"
+    elif any(w in text for w in ("might sell", "not sure if", "rumour", "said their neighbour")):
+        assessment = "Investigate"
+        ownership = "possible"
+        rationale = "Heuristic: second-hand tip — ownership and sale intent not assumed."
     elif any(
         w in text
         for w in ("selling", "for sale", "private sale", "outline planning", "guide £", "offers around")
@@ -73,12 +105,8 @@ def _heuristic_extract(hit: SearchHit) -> dict[str, Any]:
         assessment = "Strong"
         rationale = "Heuristic: sale intent + land/plot language."
         ownership = "likely" if any(
-            w in text for w in ("we own", "family-owned", "owners ", "private sale")
+            w in text for w in ("we own", "family-owned", "owners ", "private sale", "our house")
         ) else "possible"
-    elif "might sell" in text or "not confirmed" in text:
-        assessment = "Investigate"
-        ownership = "possible"
-        rationale = "Heuristic: unconfirmed tip — ownership confidence kept low."
 
     opp = "other"
     for key, label in [
@@ -94,7 +122,7 @@ def _heuristic_extract(hit: SearchHit) -> dict[str, Any]:
             break
 
     price = None
-    m = re.search(r"£\s?([\d,]+)", hit.raw_text or hit.snippet or "")
+    m = re.search(r"£\s?([\d,]+)", raw)
     if m:
         price = float(m.group(1).replace(",", ""))
 
@@ -104,14 +132,19 @@ def _heuristic_extract(hit: SearchHit) -> dict[str, Any]:
     elif "no planning" in text or "no current planning" in text:
         planning = "none"
 
+    name = None
+    name_m = re.search(r"[—\-–]\s*([A-Z][a-z]+)\s*$", raw.strip())
+    if name_m and assessment != "Reject":
+        name = name_m.group(1)
+
     return {
         "location": _heuristic_location(hit),
         "opportunity_type": opp,
         "land_size": None,
         "asking_price": price,
         "planning_status": planning,
-        "landowner_name": None,
-        "contact": None,
+        "landowner_name": name,
+        "contact": _extract_voluntary_contact(raw),
         "ownership_confidence": ownership,
         "seller_motivation": None,
         "ai_assessment": assessment,

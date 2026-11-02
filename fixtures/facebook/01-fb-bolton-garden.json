@@ -1,0 +1,16 @@
+{
+  "id": "fixture-fb-bolton-garden",
+  "title": "Hypothetical Facebook post — Bolton rear garden",
+  "source": "facebook_paste",
+  "original_post_url": "https://www.facebook.com/groups/example.invalid/posts/10001",
+  "raw_text": "Hi everyone — we own our house in Bolton BL1 and are thinking of selling the rear garden separately (private sale, not through an agent). About 0.15 acres with side access. No planning permission. Message me if you're local and serious. — Karen",
+  "expected": {
+    "location": "Bolton",
+    "opportunity_type": "garden_plot",
+    "planning_status": "none",
+    "ownership_confidence": "likely",
+    "ai_assessment": "Strong",
+    "contact": null
+  },
+  "notes": "Hypothetical only. Contact is Messenger-style with no phone/email published — contact field should stay null."
+}
