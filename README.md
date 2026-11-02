@@ -156,6 +156,19 @@ The URL is stored as metadata only — **never fetched**. No Graph API, no group
 
 Live Google/Bing/CSE hits use the result **snippet** as extract input (no page scrape in this phase). Treat ownership as provisional.
 
+## Deploy (Vercel + Postgres)
+
+Production dashboard is **`apps/web`** on Vercel. Full checklist (Root Directory, env vars, Neon/Supabase/Vercel Postgres, migrations): **[docs/deploy-vercel.md](docs/deploy-vercel.md)**.
+
+Quick path:
+
+1. Create hosted Postgres → run `psql "$DATABASE_URL" -f db/migrations/001_leads.sql` once.
+2. Import this repo on Vercel → set **Root Directory** to `apps/web`.
+3. Set env vars (no secrets in git): `DATABASE_URL` (pooled + `sslmode=require`), optional `OPENAI_API_KEY`.
+4. Deploy; open `/leads` and confirm source is PostgreSQL.
+
+Local production build: `cd apps/web && npm ci && npm run build`.
+
 ## Tests
 
 ```bash

@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import type {
@@ -30,8 +31,18 @@ interface FixtureFile {
   };
 }
 
+/** Resolve repo-root fixtures from apps/web cwd, monorepo root, or traced Vercel bundle. */
 function fixturesDir(): string {
-  return path.resolve(process.cwd(), "../../fixtures");
+  const candidates = [
+    path.resolve(process.cwd(), "../../fixtures"),
+    path.resolve(process.cwd(), "fixtures"),
+    path.resolve(__dirname, "../../../../fixtures"),
+    path.resolve(__dirname, "../../../fixtures"),
+  ];
+  for (const dir of candidates) {
+    if (existsSync(dir)) return dir;
+  }
+  return candidates[0]!;
 }
 
 /** Load hypothetical fixture leads when DATABASE_URL is unset (local demo). */
