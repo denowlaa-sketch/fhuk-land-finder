@@ -10,17 +10,17 @@ Off-market UK land sourcing for **Flipping Homes UK**. Discovery and AI qualific
 | Collectors | Python — `services/collector` |
 | Database | PostgreSQL — `db/migrations` |
 | Extraction / scoring | OpenAI API |
-| Search | Pluggable: Google CSE / Bing / Reddit / UK forums / recorded / fixtures |
+| Search | Pluggable: Google CSE / Bing / Reddit / forums / classifieds / recorded / fixtures |
 
 ## Layout
 
 ```
 apps/web/                      Next.js leads list, detail, contact-status pipeline
 services/collector/            Keyword seed, search connectors, extract/score, dedupe
-services/collector/samples/    Recorded Google CSE / Bing / Reddit / UK forum JSON for offline runs
+services/collector/samples/    Recorded Google CSE / Bing / Reddit / forums / classifieds JSON for offline runs
 db/migrations/                 SQL schema for leads (FHUK-NNNN refs)
 data/keywords/                 Greater Manchester phrase × town seed
-fixtures/                      Five hypothetical example posts
+fixtures/                      Five hypothetical example posts (+ facebook paste fixtures)
 .env.example                   Required environment variables
 ```
 
@@ -110,6 +110,19 @@ fhuk-collector run --provider forums --limit-queries 6
 fhuk-collector run --provider reddit --limit-queries 5 --write
 ```
 
+### Classifieds smoke (Gumtree / Preloved / Freeads)
+
+```bash
+# Offline recorded private landowner-style ads (default — no scrape)
+fhuk-collector run --provider classifieds --limit-queries 8
+
+# Per-site
+fhuk-collector run --provider gumtree --limit-queries 5
+
+# Optional live: Google CSE site: filters only (set CLASSIFIEDS_LIVE=true + CSE keys)
+# No HTML scraping of classified sites (ToS / brittleness).
+```
+
 ### Facebook paste (compliant — no scrape)
 
 Dashboard: open [http://localhost:3000/paste](http://localhost:3000/paste), paste a public Facebook URL (optional) **and** the post text you copied → Analyse (or Analyse & save lead).
@@ -132,16 +145,16 @@ The URL is stored as metadata only — **never fetched**. No Graph API, no group
 | Capability | No keys | With keys |
 | ---------- | ------- | --------- |
 | Keyword expand (GM) | Yes | Yes |
-| Search | `recorded` / `fixtures` / `stub` / `reddit` (recorded) / `forums` | `google`, `bing`, `reddit` (OAuth) |
+| Search | `recorded` / `fixtures` / `stub` / `reddit` (recorded) / `forums` / `classifieds` | `google`, `bing`, `reddit` (OAuth), `classifieds` live via CSE `site:` |
 | Facebook paste | Heuristic analyse + preview; save needs DB | OpenAI extract when `OPENAI_API_KEY` set |
 | Extract / score | Heuristic fallback | OpenAI (`OPENAI_API_KEY`) |
 | Dedupe + dry-run JSON | Yes | Yes |
 | Insert Postgres | Needs `DATABASE_URL` only | Same |
 | Dashboard list | Fixtures fallback | DB when `DATABASE_URL` set |
 
-`SEARCH_PROVIDER=auto` (default): Google if `GOOGLE_CSE_API_KEY` + `GOOGLE_CSE_CX`, else Bing if `BING_SEARCH_API_KEY`, else **recorded**. Reddit/forums are explicit (`--provider reddit|forums`).
+`SEARCH_PROVIDER=auto` (default): Google if `GOOGLE_CSE_API_KEY` + `GOOGLE_CSE_CX`, else Bing if `BING_SEARCH_API_KEY`, else **recorded**. Reddit/forums/classifieds are explicit (`--provider reddit|forums|classifieds|gumtree|preloved|freeads`).
 
-Live Google/Bing hits use the result **snippet** as extract input (no page scrape in this phase). Treat ownership as provisional.
+Live Google/Bing/CSE hits use the result **snippet** as extract input (no page scrape in this phase). Treat ownership as provisional.
 
 ## Tests
 
@@ -151,5 +164,5 @@ cd services/collector && pytest
 
 ## Scope notes
 
-- In scope: GM keyword → pluggable public search → AI extract/score → dedupe → Postgres → dashboard refresh; Facebook **paste** analysis (no fetch)
-- Out of scope: unofficial Facebook scraping / Graph mass search, classifieds (later), paid mapping/planning APIs, automated outreach, auctions
+- In scope: GM keyword → pluggable public search (incl. classifieds) → AI extract/score → dedupe → Postgres → dashboard refresh; Facebook **paste** analysis (no fetch)
+- Out of scope: unofficial Facebook scraping / Graph mass search, paid mapping/planning APIs, automated outreach, auctions

@@ -11,11 +11,30 @@ Python worker: Greater Manchester keywords → pluggable public web search → O
 | `bing` | `BING_SEARCH_API_KEY` | Bing Web Search v7 |
 | `reddit` | `REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET`, `REDDIT_USER_AGENT` | Official OAuth; else recorded sample |
 | `forums` | — | Light UK property/self-build forum recorded threads |
+| `classifieds` | — (optional CSE keys if live) | Gumtree + Preloved + Freeads |
+| `gumtree` / `preloved` / `freeads` | — | Per-site classifieds |
 | `recorded` | — | Offline `samples/search/google_cse_gm.json` |
 | `fixtures` | — | Repo `fixtures/` with full post text |
 | `stub` | — | Synthetic `example.invalid` URLs |
 
-No unofficial Facebook scrapers. Reddit/forums are **explicit** providers (not selected by `auto`).
+No unofficial Facebook scrapers. Reddit/forums/classifieds are **explicit** providers (not selected by `auto`).
+
+## Classifieds (Gumtree / Preloved / Freeads)
+
+**Default = offline recorded samples** (`samples/search/classifieds_gm.json`) with private landowner-style ads and an agent-spam filter.
+
+**Live (optional):** set `CLASSIFIEDS_LIVE=true` plus `GOOGLE_CSE_API_KEY` / `GOOGLE_CSE_CX`. Uses Google CSE `site:gumtree.com` (etc.) queries only — **no HTML scrape** of classified listing pages (brittle / ToS-sensitive).
+
+```bash
+# Offline smoke
+fhuk-collector run --provider classifieds --limit-queries 8
+fhuk-collector run --provider gumtree --limit-queries 5
+fhuk-collector run --provider preloved --limit-queries 5
+fhuk-collector run --provider freeads --limit-queries 5
+
+# Persist when Postgres is ready
+fhuk-collector run --provider classifieds --write
+```
 
 ## Commands
 
@@ -29,15 +48,9 @@ fhuk-collector keywords
 
 # Offline smoke (no search API keys)
 fhuk-collector run --provider recorded --limit-queries 10
-
-# Reddit offline (recorded UK land / self-build style posts)
 fhuk-collector run --provider reddit --limit-queries 8
-
-# Light UK forums offline
 fhuk-collector run --provider forums --limit-queries 6
-
-# Write to Postgres then open /leads
-fhuk-collector run --provider reddit --write
+fhuk-collector run --provider classifieds --limit-queries 8
 
 # Live Reddit when OAuth app credentials are set
 fhuk-collector run --provider reddit --limit-queries 5 --write
@@ -54,7 +67,6 @@ REDDIT_CLIENT_ID=...
 REDDIT_CLIENT_SECRET=...
 REDDIT_USER_AGENT=fhuk-land-finder/0.1 (by your-reddit-username)
 REDDIT_SUBREDDITS=SelfBuild,HousingUK,manchester,UKProperty,AskUK
-# optional: try public .json before recorded fallback
 REDDIT_ALLOW_PUBLIC_JSON=false
 ```
 
@@ -77,4 +89,5 @@ fhuk-collector analyze-paste --fixture ../../fixtures/facebook/01-fb-bolton-gard
 - `samples/search/bing_gm.json` — Bing-shaped reference sample
 - `samples/search/reddit_gm.json` — recorded Reddit-style GM land posts
 - `samples/search/uk_forums_gm.json` — light UK forum recorded threads
+- `samples/search/classifieds_gm.json` — Gumtree / Preloved / Freeads GM ads
 - `../../fixtures/facebook/*.json` — hypothetical Facebook paste fixtures
