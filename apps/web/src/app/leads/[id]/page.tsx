@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { StatusForm } from "@/components/StatusForm";
 import { fetchLead } from "@/lib/leads";
 
+export const dynamic = "force-dynamic";
+
 function formatPrice(value: number | null): string {
   if (value === null) return "—";
   return new Intl.NumberFormat("en-GB", {
