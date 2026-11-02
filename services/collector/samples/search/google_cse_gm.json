@@ -1,0 +1,58 @@
+{
+  "kind": "customsearch#search",
+  "url": {
+    "type": "application/json",
+    "template": "https://www.googleapis.com/customsearch/v1?q={searchTerms}"
+  },
+  "queries": {
+    "request": [
+      {
+        "title": "Google Custom Search - Greater Manchester land (recorded sample)",
+        "totalResults": "5",
+        "searchTerms": "selling land Greater Manchester",
+        "count": 5
+      }
+    ]
+  },
+  "searchInformation": {
+    "searchTime": 0.12,
+    "formattedSearchTime": "0.12",
+    "totalResults": "5",
+    "formattedTotalResults": "5"
+  },
+  "items": [
+    {
+      "title": "Back garden land — Bolton BL1 (hypothetical public post)",
+      "link": "https://example.invalid/fixtures/bolton-backland",
+      "snippet": "Bolton BL1 rear garden roughly 0.18 acres with side access. No planning yet. Prefer a quiet sale, not through an agent. Text Dave.",
+      "raw_text": "Hi, we own a house in Bolton BL1 and are considering selling the rear garden separately. Roughly 0.18 acres with side access from a private lane. No planning yet — happy to speak to someone local who knows backland plots. Prefer a quiet sale, not through an agent. Text Dave on 07XXX XXXXXX if interested."
+    },
+    {
+      "title": "Former yard / brownfield — Oldham OL8 (hypothetical)",
+      "link": "https://example.invalid/fixtures/oldham-brownfield",
+      "snippet": "Family-owned former builder's yard in Oldham OL8. About 0.35 acres. Looking for offers around £175k. Contact M. Ahmed.",
+      "raw_text": "Family-owned former builder's yard in Oldham OL8 coming available. About 0.35 acres hardstanding, existing vehicle access off a side street. Not listed with any agent. Looking for offers around £175k. No current planning; previous light industrial use. Contact M. Ahmed — m.ahmed@example.invalid."
+    },
+    {
+      "title": "Infill gap plot — Stockport SK3 (hypothetical forum tip)",
+      "link": "https://example.invalid/fixtures/stockport-infill",
+      "snippet": "Small gap site between two semis in Stockport SK3. Neighbour mentioned the owner might sell — not confirmed. No phone number.",
+      "raw_text": "Small gap site between two semis in Stockport SK3. Neighbour mentioned the owner might sell — not confirmed. Looks like room for one dwelling if access can be sorted. Saw a note on a local forum; no phone number given. Might be worth a knock."
+    },
+    {
+      "title": "Paddock / agricultural edge — Wigan WN2 (hypothetical)",
+      "link": "https://example.invalid/fixtures/wigan-paddock",
+      "snippet": "1.2 acre paddock on the edge of Wigan WN2. Asking £95,000. Seller says green belt — not a building plot. Call Sarah.",
+      "raw_text": "1.2 acre paddock on the edge of Wigan WN2. Grazing only for years. Asking £95,000. Seller says green belt so no residential planning expected — selling as amenity/agricultural land. Call Sarah 01XXX XXXXXX. Not a building plot."
+    },
+    {
+      "title": "Garden plot with outline PP — Sale / Trafford (hypothetical)",
+      "link": "https://example.invalid/fixtures/garden-build-permission",
+      "snippet": "Large rear garden in Sale (Trafford) with outline planning for one dwelling. Plot approx 320 sq m. Guide £220k. Ask for Helen.",
+      "raw_text": "Private sale: large rear garden in Sale (Trafford) with outline planning permission for one detached dwelling granted last year. Plot approx 320 sq m. Guide £220k. Owners downsizing and want a clean break without estate agent fees. Email plotsale.sale@example.invalid — ask for Helen."
+    }
+  ],
+  "_meta": {
+    "note": "Recorded/sample Google CSE-shaped payload for offline Greater Manchester smoke tests. Hypothetical content only — not live search results."
+  }
+}

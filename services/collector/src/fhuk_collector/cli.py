@@ -8,20 +8,26 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+from .connectors import available_providers, resolve_connector
 from .dedupe import is_duplicate
-from .extract import extract_and_score, from_fixture_expected
+from .extract import from_fixture_expected
 from .keywords import expand_queries, load_keywords
-from .search import load_fixture_hits, stub_search
+from .pipeline import run_pipeline
 
 
 def _repo_root() -> Path:
-    # services/collector/src/fhuk_collector → repo root
     return Path(__file__).resolve().parents[4]
 
 
 def _load_env() -> None:
     load_dotenv(_repo_root() / ".env")
     load_dotenv()
+
+
+def _resolve_dry_run(args: argparse.Namespace) -> bool:
+    if args.dry_run is not None:
+        return bool(args.dry_run)
+    return os.getenv("COLLECTOR_DRY_RUN", "true").lower() in {"1", "true", "yes"}
 
 
 def cmd_keywords(_: argparse.Namespace) -> int:
@@ -42,74 +48,60 @@ def cmd_keywords(_: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_providers(_: argparse.Namespace) -> int:
+    print(json.dumps(available_providers(), indent=2))
+    return 0
+
+
 def cmd_run(args: argparse.Namespace) -> int:
-    dry_run = (
-        args.dry_run
-        if args.dry_run is not None
-        else os.getenv("COLLECTOR_DRY_RUN", "true").lower()
-        in {"1", "true", "yes"}
+    dry_run = _resolve_dry_run(args)
+    fixtures_dir = (
+        Path(args.fixtures).resolve()
+        if args.fixtures
+        else _repo_root() / "fixtures"
     )
 
-    if args.fixtures:
-        fixtures_dir = Path(args.fixtures).resolve()
-        hits = load_fixture_hits(fixtures_dir)
-    else:
-        queries = expand_queries()
-        if args.limit_queries:
-            queries = queries[: args.limit_queries]
-        hits = stub_search(queries, limit_per_query=1)
+    provider = args.provider
+    use_all_fixtures = False
+    if args.fixtures and not provider:
+        provider = "fixtures"
+        use_all_fixtures = True
+    if provider == "fixtures":
+        use_all_fixtures = True
 
-    existing_hashes: set[str] = set()
-    existing_urls: set[str] = set()
+    connector = resolve_connector(
+        provider,
+        fixtures_dir=fixtures_dir,
+        recorded_path=Path(args.recorded).resolve() if args.recorded else None,
+    )
+
     conn = None
     if not dry_run:
         from . import db as dbmod
 
         conn = dbmod.connect()
-        existing_hashes = dbmod.fetch_existing_hashes(conn)
-        existing_urls = dbmod.fetch_existing_urls(conn)
 
-    results = []
-    for hit in hits:
-        if hit.url and hit.url in existing_urls:
-            results.append({"url": hit.url, "status": "duplicate_url"})
-            continue
-        lead = extract_and_score(hit)
-        if is_duplicate(existing_hashes, lead.content_hash):
-            results.append(
-                {
-                    "url": hit.url,
-                    "status": "duplicate_hash",
-                    "content_hash": lead.content_hash,
-                }
-            )
-            continue
-        if dry_run or conn is None:
-            results.append({"status": "dry_run", "lead": lead.to_dict()})
-        else:
-            from . import db as dbmod
+    try:
+        summary = run_pipeline(
+            connector,
+            dry_run=dry_run,
+            limit_queries=args.limit_queries,
+            results_per_query=args.results_per_query,
+            use_all_fixtures=use_all_fixtures,
+            fixtures_dir=fixtures_dir if use_all_fixtures else None,
+            conn=conn,
+        )
+    finally:
+        if conn is not None:
+            conn.close()
 
-            inserted = dbmod.insert_lead(conn, lead)
-            existing_hashes.add(lead.content_hash)
-            if lead.original_post_url:
-                existing_urls.add(lead.original_post_url)
-            results.append({"status": "inserted", **inserted, "lead": lead.to_dict()})
-
-    if conn is not None:
-        conn.close()
-
-    print(json.dumps({"count": len(results), "results": results}, indent=2, default=str))
+    print(json.dumps(summary.to_dict(), indent=2, default=str))
     return 0
 
 
 def cmd_seed_fixtures(args: argparse.Namespace) -> int:
     fixtures_dir = Path(args.fixtures).resolve()
-    dry_run = (
-        args.dry_run
-        if args.dry_run is not None
-        else os.getenv("COLLECTOR_DRY_RUN", "true").lower()
-        in {"1", "true", "yes"}
-    )
+    dry_run = _resolve_dry_run(args)
 
     conn = None
     existing_hashes: set[str] = set()
@@ -154,19 +146,46 @@ def cmd_seed_fixtures(args: argparse.Namespace) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="fhuk-collector",
-        description="FHUK Land Finder collector (Phase 0)",
+        description="FHUK Land Finder collector — GM search → extract → store",
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
     p_kw = sub.add_parser("keywords", help="Expand phrase × town queries")
     p_kw.set_defaults(func=cmd_keywords)
 
-    p_run = sub.add_parser("run", help="Stub search → extract → score")
+    p_prov = sub.add_parser("providers", help="List search providers")
+    p_prov.set_defaults(func=cmd_providers)
+
+    p_run = sub.add_parser(
+        "run",
+        help="Keywords → search → extract/score → dedupe → (optional) Postgres",
+    )
+    p_run.add_argument(
+        "--provider",
+        choices=sorted(available_providers().keys()),
+        default=None,
+        help="Search connector (default: SEARCH_PROVIDER or auto)",
+    )
     p_run.add_argument(
         "--fixtures",
-        help="Use fixture posts as search hits instead of stub search",
+        help="Fixtures directory; implies --provider fixtures when provider omitted",
     )
-    p_run.add_argument("--limit-queries", type=int, default=20)
+    p_run.add_argument(
+        "--recorded",
+        help="Path to recorded Google CSE / sample JSON",
+    )
+    p_run.add_argument(
+        "--limit-queries",
+        type=int,
+        default=20,
+        help="Max keyword queries (default 20). Use 0 for none (fixtures-all still works).",
+    )
+    p_run.add_argument(
+        "--results-per-query",
+        type=int,
+        default=5,
+        help="Hits to request per query (default 5)",
+    )
     p_run.add_argument(
         "--dry-run",
         dest="dry_run",

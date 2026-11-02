@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { fetchLeads } from "@/lib/leads";
 
+/** Always re-read DB/fixtures so a collector run shows up on refresh. */
+export const dynamic = "force-dynamic";
+
 function formatPrice(value: number | null): string {
   if (value === null) return "—";
   return new Intl.NumberFormat("en-GB", {
@@ -28,11 +31,16 @@ export default async function LeadsPage() {
         Off-market UK land opportunities for Greater Manchester pilot.
         Showing {leads.length} lead{leads.length === 1 ? "" : "s"} from{" "}
         {source === "database" ? "PostgreSQL" : "fixtures (no DATABASE_URL)"}.
+        {source === "database"
+          ? " Refresh after fhuk-collector run --write to see new rows."
+          : " Set DATABASE_URL and migrate to load ingested leads."}
       </p>
 
       {leads.length === 0 ? (
         <div className="empty">
-          No leads yet. Run the collector against fixtures or seed the database.
+          No leads yet. Smoke path:{" "}
+          <code>fhuk-collector run --provider recorded --write</code> then refresh
+          this page.
         </div>
       ) : (
         <table className="leads-table">

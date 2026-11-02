@@ -1,0 +1,38 @@
+{
+  "_type": "SearchResponse",
+  "queryContext": {
+    "originalQuery": "selling land Greater Manchester"
+  },
+  "webPages": {
+    "value": [
+      {
+        "name": "Back garden land — Bolton BL1 (hypothetical public post)",
+        "url": "https://example.invalid/fixtures/bolton-backland",
+        "snippet": "Bolton BL1 rear garden roughly 0.18 acres with side access. No planning yet. Prefer a quiet sale, not through an agent. Text Dave."
+      },
+      {
+        "name": "Former yard / brownfield — Oldham OL8 (hypothetical)",
+        "url": "https://example.invalid/fixtures/oldham-brownfield",
+        "snippet": "Family-owned former builder's yard in Oldham OL8. About 0.35 acres. Looking for offers around £175k. Contact M. Ahmed."
+      },
+      {
+        "name": "Infill gap plot — Stockport SK3 (hypothetical forum tip)",
+        "url": "https://example.invalid/fixtures/stockport-infill",
+        "snippet": "Small gap site between two semis in Stockport SK3. Neighbour mentioned the owner might sell — not confirmed."
+      },
+      {
+        "name": "Paddock / agricultural edge — Wigan WN2 (hypothetical)",
+        "url": "https://example.invalid/fixtures/wigan-paddock",
+        "snippet": "1.2 acre paddock on the edge of Wigan WN2. Asking £95,000. Seller says green belt — not a building plot."
+      },
+      {
+        "name": "Garden plot with outline PP — Sale / Trafford (hypothetical)",
+        "url": "https://example.invalid/fixtures/garden-build-permission",
+        "snippet": "Large rear garden in Sale with outline planning for one dwelling. Guide £220k. Ask for Helen."
+      }
+    ]
+  },
+  "_meta": {
+    "note": "Bing-shaped sample for documentation/tests. Recorded connector defaults to google_cse_gm.json which includes full raw_text for extract."
+  }
+}
