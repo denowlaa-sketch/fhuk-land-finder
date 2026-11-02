@@ -103,6 +103,21 @@ fhuk-collector analyze-paste --url 'https://www.facebook.com/…' --text '…pas
 fhuk-collector analyze-paste --fixture ../../fixtures/facebook/01-fb-bolton-garden.json --write
 ```
 
+## Email notifications (Strong / Investigate)
+
+```bash
+# Log-only (no SMTP / API keys needed)
+NOTIFY_EMAIL_ENABLED=true NOTIFY_EMAIL_TO=you@example.com NOTIFY_EMAIL_MODE=dry-run \
+  fhuk-collector run --provider recorded --limit-queries 5 --write
+
+# Live SMTP example
+NOTIFY_EMAIL_ENABLED=true NOTIFY_EMAIL_MODE=send NOTIFY_EMAIL_PROVIDER=smtp \
+  NOTIFY_EMAIL_TO=you@example.com SMTP_HOST=smtp.example.com SMTP_USER=… SMTP_PASSWORD=… \
+  fhuk-collector analyze-paste --fixture ../../fixtures/facebook/01-fb-bolton-garden.json --write
+```
+
+Reject leads never email. Updates to an existing URL do not re-notify.
+
 ## Samples
 
 - `samples/search/google_cse_gm.json` — recorded CSE-shaped payload

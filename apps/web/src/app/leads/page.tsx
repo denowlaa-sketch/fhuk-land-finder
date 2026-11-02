@@ -35,7 +35,8 @@ export default async function LeadsPage() {
           ? " Refresh after fhuk-collector run --write to see new rows."
           : " Set DATABASE_URL and migrate to load ingested leads."}{" "}
         <Link href="/paste">Paste a Facebook post</Link> to analyse without
-        scraping.
+        scraping. Email alerts for Strong/Investigate leads: see{" "}
+        <Link href="/settings">Settings</Link>.
       </p>
 
       {leads.length === 0 ? (

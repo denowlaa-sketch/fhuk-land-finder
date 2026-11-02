@@ -154,6 +154,33 @@ fhuk-collector analyze-paste \
 
 The URL is stored as metadata only — **never fetched**. No Graph API, no group scrapers. Ownership/sale intent are not assumed from the link alone. Contacts only if voluntarily present in the pasted text. Labels: Strong / Investigate / Reject.
 
+## Email lead notifications
+
+When a **new** lead with AI assessment `Strong` or `Investigate` is written
+(collector `run --write`, `analyze-paste --write`, or dashboard paste save),
+an optional summary email can be sent (ref, location, type, assessment, source link).
+
+| Variable | Purpose |
+| -------- | ------- |
+| `NOTIFY_EMAIL_ENABLED` | Master switch (`true` / `false`) |
+| `NOTIFY_EMAIL_MODE` | `dry-run` (default — log only) or `send` |
+| `NOTIFY_EMAIL_TO` | Recipient(s), comma-separated |
+| `NOTIFY_EMAIL_FROM` | From address |
+| `NOTIFY_EMAIL_PROVIDER` | `smtp` \| `resend` \| `sendgrid` |
+| `SMTP_*` / `RESEND_API_KEY` / `SENDGRID_API_KEY` | Provider credentials |
+
+Offline / CI-friendly: leave `NOTIFY_EMAIL_MODE=dry-run` — the collector prints a JSON `notify` dry-run line instead of sending.
+
+Dashboard: **Settings** (`/settings`) shows live status and a paste-path toggle (browser preference; collector still follows env).
+
+```bash
+# Dry-run notify smoke (no inbox)
+NOTIFY_EMAIL_ENABLED=true \
+NOTIFY_EMAIL_TO=you@example.com \
+NOTIFY_EMAIL_MODE=dry-run \
+fhuk-collector run --provider recorded --limit-queries 5 --write
+```
+
 ## What works without API keys vs with keys
 
 | Capability | No keys | With keys |
@@ -165,6 +192,7 @@ The URL is stored as metadata only — **never fetched**. No Graph API, no group
 | Dedupe + dry-run JSON | Yes | Yes |
 | Insert Postgres | Needs `DATABASE_URL` only | Same |
 | Dashboard list | Fixtures fallback | DB when `DATABASE_URL` set |
+| Email notify | Dry-run log mode | SMTP / Resend / SendGrid (`NOTIFY_EMAIL_MODE=send`) |
 
 `SEARCH_PROVIDER=auto` (default): Google if `GOOGLE_CSE_API_KEY` + `GOOGLE_CSE_CX`, else Bing if `BING_SEARCH_API_KEY`, else **recorded**. Reddit/forums/classifieds/auctions are explicit (`--provider reddit|forums|classifieds|gumtree|preloved|freeads|auctions|auctionhouse|sdl|eg|plotfinder|plotbrowser`).
 
@@ -191,5 +219,5 @@ cd services/collector && pytest
 
 ## Scope notes
 
-- In scope: GM keyword → pluggable public search (incl. classifieds, UK auction catalogues / specialist plot sites) → AI extract/score → dedupe → Postgres → dashboard refresh; Facebook **paste** analysis (no fetch)
+- In scope: GM keyword → pluggable public search (incl. classifieds, UK auction catalogues / specialist plot sites) → AI extract/score → dedupe → Postgres → dashboard refresh; Facebook **paste** analysis (no fetch); optional Strong/Investigate email alerts; Vercel + Postgres deploy path
 - Out of scope: unofficial Facebook scraping / Graph mass search, paid mapping/planning APIs, automated outreach, brittle HTML scrapes of auction/plot sites

@@ -165,12 +165,25 @@ def cmd_analyze_paste(args: argparse.Namespace) -> int:
         return 0
 
     from . import db as dbmod
+    from . import notify as notifymod
 
     conn = dbmod.connect()
     try:
         saved = dbmod.upsert_lead_by_url(conn, lead)
         payload["status"] = "inserted" if saved.get("created") else "updated"
         payload.update(saved)
+        notify_result = notifymod.maybe_notify_lead(
+            ref=saved["ref"],
+            location=lead.location,
+            opportunity_type=lead.opportunity_type,
+            ai_assessment=lead.ai_assessment,
+            source=lead.source,
+            original_post_url=lead.original_post_url,
+            ai_rationale=lead.ai_rationale,
+            created=bool(saved.get("created")),
+        )
+        if notify_result is not None:
+            payload["notify"] = notify_result
     finally:
         conn.close()
     print(json.dumps(payload, indent=2, default=str))
@@ -207,12 +220,26 @@ def cmd_seed_fixtures(args: argparse.Namespace) -> int:
             )
         else:
             from . import db as dbmod
+            from . import notify as notifymod
 
             inserted = dbmod.insert_lead(conn, lead)
             existing_hashes.add(lead.content_hash)
             if lead.original_post_url:
                 existing_urls.add(lead.original_post_url)
-            results.append({"file": path.name, "status": "inserted", **inserted})
+            notify_result = notifymod.maybe_notify_lead(
+                ref=inserted["ref"],
+                location=lead.location,
+                opportunity_type=lead.opportunity_type,
+                ai_assessment=lead.ai_assessment,
+                source=lead.source,
+                original_post_url=lead.original_post_url,
+                ai_rationale=lead.ai_rationale,
+                created=True,
+            )
+            entry = {"file": path.name, "status": "inserted", **inserted}
+            if notify_result is not None:
+                entry["notify"] = notify_result
+            results.append(entry)
 
     if conn is not None:
         conn.close()
