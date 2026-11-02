@@ -1,0 +1,21 @@
+{
+  "id": "fixture-bolton-backland",
+  "town": "Bolton",
+  "title": "Back garden land — Bolton BL1 (hypothetical)",
+  "source": "fixture",
+  "original_post_url": "https://example.invalid/fixtures/bolton-backland",
+  "posted_at": "2026-10-12T09:15:00Z",
+  "raw_text": "Hi, we own a house in Bolton BL1 and are considering selling the rear garden separately. Roughly 0.18 acres with side access from a private lane. No planning yet — happy to speak to someone local who knows backland plots. Prefer a quiet sale, not through an agent. Text Dave on 07XXX XXXXXX if interested.",
+  "expected": {
+    "location": "Bolton, BL1",
+    "opportunity_type": "backland",
+    "land_size": "0.18 acres",
+    "asking_price": null,
+    "planning_status": "none",
+    "landowner_name": "Dave",
+    "contact": "07XXX XXXXXX",
+    "ownership_confidence": "likely",
+    "seller_motivation": "Quiet private sale of rear garden; open to local buyer",
+    "ai_assessment": "Strong"
+  }
+}

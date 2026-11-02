@@ -1,0 +1,21 @@
+{
+  "id": "fixture-stockport-infill",
+  "town": "Stockport",
+  "title": "Infill gap plot — Stockport SK3 (hypothetical)",
+  "source": "fixture",
+  "original_post_url": "https://example.invalid/fixtures/stockport-infill",
+  "posted_at": "2026-10-22T11:05:00Z",
+  "raw_text": "Small gap site between two semis in Stockport SK3. Neighbour mentioned the owner might sell — not confirmed. Looks like room for one dwelling if access can be sorted. Saw a note on a local forum; no phone number given. Might be worth a knock.",
+  "expected": {
+    "location": "Stockport, SK3",
+    "opportunity_type": "infill",
+    "land_size": null,
+    "asking_price": null,
+    "planning_status": "unknown",
+    "landowner_name": null,
+    "contact": null,
+    "ownership_confidence": "possible",
+    "seller_motivation": "Unconfirmed second-hand tip that owner might sell",
+    "ai_assessment": "Investigate"
+  }
+}

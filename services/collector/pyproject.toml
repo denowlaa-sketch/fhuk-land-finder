@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fhuk-collector"
+version = "0.1.0"
+description = "Phase 0 land lead collector for Flipping Homes UK"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "openai>=1.55.0",
+  "psycopg[binary]>=3.2.0",
+  "python-dotenv>=1.0.1",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+fhuk-collector = "fhuk_collector.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

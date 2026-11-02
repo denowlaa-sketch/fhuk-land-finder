@@ -1,0 +1,21 @@
+{
+  "id": "fixture-wigan-paddock",
+  "town": "Wigan",
+  "title": "Paddock / agricultural edge — Wigan WN2 (hypothetical)",
+  "source": "fixture",
+  "original_post_url": "https://example.invalid/fixtures/wigan-paddock",
+  "posted_at": "2026-10-25T16:20:00Z",
+  "raw_text": "1.2 acre paddock on the edge of Wigan WN2. Grazing only for years. Asking £95,000. Seller says green belt so no residential planning expected — selling as amenity/agricultural land. Call Sarah 01XXX XXXXXX. Not a building plot.",
+  "expected": {
+    "location": "Wigan, WN2",
+    "opportunity_type": "agricultural",
+    "land_size": "1.2 acres",
+    "asking_price": 95000,
+    "planning_status": "none",
+    "landowner_name": "Sarah",
+    "contact": "01XXX XXXXXX",
+    "ownership_confidence": "likely",
+    "seller_motivation": "Selling amenity/agricultural paddock; explicitly not a building plot",
+    "ai_assessment": "Reject"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "id": "fixture-oldham-brownfield",
+  "town": "Oldham",
+  "title": "Former yard / brownfield — Oldham OL8 (hypothetical)",
+  "source": "fixture",
+  "original_post_url": "https://example.invalid/fixtures/oldham-brownfield",
+  "posted_at": "2026-10-18T14:40:00Z",
+  "raw_text": "Family-owned former builder's yard in Oldham OL8 coming available. About 0.35 acres hardstanding, existing vehicle access off a side street. Not listed with any agent. Looking for offers around £175k. No current planning; previous light industrial use. Contact M. Ahmed — m.ahmed@example.invalid.",
+  "expected": {
+    "location": "Oldham, OL8",
+    "opportunity_type": "brownfield",
+    "land_size": "0.35 acres",
+    "asking_price": 175000,
+    "planning_status": "none",
+    "landowner_name": "M. Ahmed",
+    "contact": "m.ahmed@example.invalid",
+    "ownership_confidence": "likely",
+    "seller_motivation": "Family disposing of former builder's yard; private sale",
+    "ai_assessment": "Strong"
+  }
+}

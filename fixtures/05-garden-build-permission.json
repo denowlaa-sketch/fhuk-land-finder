@@ -1,0 +1,21 @@
+{
+  "id": "fixture-garden-build-permission",
+  "town": "Trafford",
+  "title": "Garden plot with outline PP — Trafford / Sale (hypothetical)",
+  "source": "fixture",
+  "original_post_url": "https://example.invalid/fixtures/garden-build-permission",
+  "posted_at": "2026-10-28T08:50:00Z",
+  "raw_text": "Private sale: large rear garden in Sale (Trafford) with outline planning permission for one detached dwelling granted last year. Plot approx 320 sq m. Guide £220k. Owners downsizing and want a clean break without estate agent fees. Email plotsale.sale@example.invalid — ask for Helen.",
+  "expected": {
+    "location": "Sale, Trafford",
+    "opportunity_type": "garden_plot",
+    "land_size": "320 sq m",
+    "asking_price": 220000,
+    "planning_status": "outline",
+    "landowner_name": "Helen",
+    "contact": "plotsale.sale@example.invalid",
+    "ownership_confidence": "confirmed",
+    "seller_motivation": "Downsizing; private sale of garden plot with outline PP",
+    "ai_assessment": "Strong"
+  }
+}
