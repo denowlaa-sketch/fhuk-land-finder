@@ -36,6 +36,7 @@ export default function RootLayout({
             <nav className="site-nav" aria-label="Primary">
               <a href="/leads">Leads</a>
               <a href="/paste">Facebook paste</a>
+              <a href="/settings">Settings</a>
             </nav>
           </header>
           {children}

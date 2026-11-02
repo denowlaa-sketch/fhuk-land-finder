@@ -161,11 +161,22 @@ def run_pipeline(
             continue
 
         from . import db as dbmod
+        from . import notify as notifymod
 
         inserted = dbmod.insert_lead(conn, lead)
         existing_hashes.add(lead.content_hash)
         if lead.original_post_url:
             existing_urls.add(lead.original_post_url)
+        notifymod.maybe_notify_lead(
+            ref=inserted["ref"],
+            location=lead.location,
+            opportunity_type=lead.opportunity_type,
+            ai_assessment=lead.ai_assessment,
+            source=lead.source,
+            original_post_url=lead.original_post_url,
+            ai_rationale=lead.ai_rationale,
+            created=True,
+        )
         results.append(
             PipelineResult(
                 status="inserted",

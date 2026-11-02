@@ -307,6 +307,33 @@ h1 {
   color: var(--accent);
 }
 
+.settings-block {
+  margin: 0 0 2rem;
+  max-width: 42rem;
+}
+
+.settings-block h2 {
+  font-size: 1.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.notify-toggle {
+  margin-top: 0.5rem;
+}
+
+.notify-toggle-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  font-size: 1rem;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.notify-toggle-label input {
+  margin-top: 0.25rem;
+}
+
 @media (max-width: 720px) {
   .leads-table {
     display: block;

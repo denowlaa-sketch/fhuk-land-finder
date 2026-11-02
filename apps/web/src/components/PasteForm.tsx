@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import type { PasteAnalysis } from "@/lib/facebookPaste";
 import type { Lead } from "@/lib/types";
+import { readPasteNotifyPref } from "@/components/NotifyToggle";
 
 interface AnalyzeResponse {
   analysis?: PasteAnalysis;
@@ -13,6 +14,14 @@ interface AnalyzeResponse {
   lead?: Lead;
   error?: string;
   note?: string;
+  notify?: {
+    dry_run?: boolean;
+    sent?: boolean;
+    skipped?: boolean;
+    reason?: string;
+    error?: string;
+    subject?: string;
+  } | null;
 }
 
 export function PasteForm() {
@@ -26,10 +35,11 @@ export function PasteForm() {
   async function run(save: boolean) {
     setError(null);
     setResult(null);
+    const notify = readPasteNotifyPref(true);
     const res = await fetch("/api/analyze-paste", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url: url || null, text, save }),
+      body: JSON.stringify({ url: url || null, text, save, notify }),
     });
     const body = (await res.json()) as AnalyzeResponse;
     if (!res.ok) {
@@ -146,6 +156,22 @@ export function PasteForm() {
               set.
             </p>
           )}
+          {result.notify ? (
+            <p className="meta-pill">
+              Notify:{" "}
+              {result.notify.error
+                ? `error — ${result.notify.error}`
+                : result.notify.skipped
+                  ? result.notify.reason ?? "skipped"
+                  : result.notify.dry_run
+                    ? `dry-run logged${result.notify.subject ? ` (${result.notify.subject})` : ""}`
+                    : result.notify.sent
+                      ? "email sent"
+                      : "no alert (Reject or alerts disabled)"}
+              {" · "}
+              <Link href="/settings">settings</Link>
+            </p>
+          ) : null}
         </div>
       ) : null}
     </div>
