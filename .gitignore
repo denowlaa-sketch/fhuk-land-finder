@@ -19,6 +19,7 @@ build/
 apps/web/.next/
 apps/web/out/
 apps/web/.turbo/
+*.tsbuildinfo
 
 # Python tooling
 .pytest_cache/
