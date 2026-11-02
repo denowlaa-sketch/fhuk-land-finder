@@ -1,0 +1,26 @@
+{
+  "kind": "uk_forums#recorded",
+  "threads": [
+    {
+      "board": "selfbuild_forum",
+      "title": "Back garden plot Bolton — landowner considering private sale",
+      "url": "https://example.invalid/forums/selfbuild/bolton-garden-plot",
+      "body": "Hypothetical self-build forum post: Owner in Bolton considering selling the rear garden separately. Plot has side access, no planning. Asking whether self-builders prefer land for sale with or without outline first. Contact details withheld until PM."
+    },
+    {
+      "board": "property_forum",
+      "title": "Inherited land Oldham — brownfield yard, offers invited",
+      "url": "https://example.invalid/forums/property/oldham-inherited-yard",
+      "body": "Hypothetical UK property forum thread: Family-owned former yard in Oldham, inherited, roughly a third of an acre. No agent. Looking for indicative offers; planning status none / previous light industrial. Classic landowner selling phrase set for extract tests."
+    },
+    {
+      "board": "local_gm_forum",
+      "title": "Infill gap Stockport — rumour only, no planning",
+      "url": "https://example.invalid/forums/local/stockport-infill-rumour",
+      "body": "Local forum tip (hypothetical): gap between semis in Stockport, someone said the owner might sell. No phone, no asking price, ownership confidence should stay possible / investigate only."
+    }
+  ],
+  "_meta": {
+    "note": "Light UK property / self-build forum recorded samples for Greater Manchester. Offline-only in this phase."
+  }
+}

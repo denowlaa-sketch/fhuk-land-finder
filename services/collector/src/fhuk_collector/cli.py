@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 from .connectors import available_providers, resolve_connector
 from .dedupe import is_duplicate
 from .extract import from_fixture_expected
-from .keywords import expand_queries, load_keywords
+from .keywords import expand_queries, expand_reddit_queries, load_keywords
 from .pipeline import run_pipeline
 
 
@@ -75,6 +75,12 @@ def cmd_run(args: argparse.Namespace) -> int:
         recorded_path=Path(args.recorded).resolve() if args.recorded else None,
     )
 
+    # Reddit/forums use phrase sets aligned with the keyword library (+ extras).
+    resolved_provider = getattr(connector, "name", provider or "")
+    custom_queries = None
+    if resolved_provider in {"reddit", "forums"}:
+        custom_queries = expand_reddit_queries()
+
     conn = None
     if not dry_run:
         from . import db as dbmod
@@ -87,6 +93,7 @@ def cmd_run(args: argparse.Namespace) -> int:
             dry_run=dry_run,
             limit_queries=args.limit_queries,
             results_per_query=args.results_per_query,
+            queries=custom_queries,
             use_all_fixtures=use_all_fixtures,
             fixtures_dir=fixtures_dir if use_all_fixtures else None,
             conn=conn,

@@ -21,6 +21,19 @@ def load_keywords(path: Path | None = None) -> dict[str, Any]:
         return json.load(f)
 
 
+# Extra landowner / sale-intent phrases for Reddit & forums (aligned with seed).
+REDDIT_EXTRA_PHRASES = [
+    "land for sale",
+    "inherited land",
+    "garden plot",
+    "no planning",
+    "private sale plot",
+    "back garden for sale",
+    "self build plot",
+    "landowner selling",
+]
+
+
 def expand_queries(seed: dict[str, Any] | None = None) -> list[str]:
     """Build phrase × town query list for the pilot region."""
     data = seed or load_keywords()
@@ -33,4 +46,34 @@ def expand_queries(seed: dict[str, Any] | None = None) -> list[str]:
             queries.append(
                 template.format(phrase=phrase, town=town, region=data.get("region", ""))
             )
+    return queries
+
+
+def expand_reddit_queries(
+    seed: dict[str, Any] | None = None,
+    *,
+    priority_towns: list[str] | None = None,
+) -> list[str]:
+    """
+    Reddit/forum-oriented queries: seed phrases + extras × priority towns,
+    plus region-level phrase queries (fewer, higher signal for subreddit search).
+    """
+    data = seed or load_keywords()
+    region = str(data.get("region", "Greater Manchester"))
+    towns = priority_towns or [
+        "Manchester",
+        "Bolton",
+        "Oldham",
+        "Stockport",
+        "Wigan",
+        "Sale",
+        "Trafford",
+        "Salford",
+    ]
+    phrases = list(dict.fromkeys([*data.get("phrases", []), *REDDIT_EXTRA_PHRASES]))
+    queries: list[str] = []
+    for phrase in phrases:
+        queries.append(f"{phrase} {region}")
+        for town in towns:
+            queries.append(f"{phrase} {town}")
     return queries

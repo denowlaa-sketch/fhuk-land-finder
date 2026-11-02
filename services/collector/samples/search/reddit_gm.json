@@ -1,0 +1,39 @@
+{
+  "kind": "reddit#recorded",
+  "queryContext": "Greater Manchester land / self-build / landowner phrases",
+  "posts": [
+    {
+      "subreddit": "SelfBuild",
+      "title": "Inherited small plot near Bolton — any hope without planning?",
+      "permalink": "/r/SelfBuild/comments/fixture001/inherited_plot_bolton/",
+      "selftext": "Family inherited a side garden plot in Bolton (BL1 area), roughly a tenth of an acre with rear lane access. No planning permission and neighbours are sensitive. We're not agents — just trying to understand if a self-builder would even look at this, or if we should keep it as garden. Happy to share more privately."
+    },
+    {
+      "subreddit": "HousingUK",
+      "title": "Anyone bought a privately advertised garden plot in Greater Manchester?",
+      "permalink": "/r/HousingUK/comments/fixture002/garden_plot_gm/",
+      "selftext": "Saw a privately listed garden land for sale in Oldham (not on Rightmove). Owner says no planning yet but thinks backland might work. Looking for war stories — what due diligence did you do before contacting the landowner?"
+    },
+    {
+      "subreddit": "manchester",
+      "title": "Neighbour mentioning selling rear garden in Stockport — red flags?",
+      "permalink": "/r/manchester/comments/fixture003/stockport_rear_garden/",
+      "selftext": "Over the fence chat in Stockport SK3 — neighbour said they might sell part of the rear garden for a one-bed. No formal listing, no price. Feels like classic landowner testing the water. Is this worth a polite note or leave it alone?"
+    },
+    {
+      "subreddit": "UKProperty",
+      "title": "Paddock on Wigan fringe marketed as 'potential building plot' — green belt?",
+      "permalink": "/r/UKProperty/comments/fixture004/wigan_paddock/",
+      "selftext": "Agricultural paddock near Wigan WN2 listed as potential building plot. Seller is clear there is no planning and it's likely green belt. Asking mid five-figures. Sounds like amenity land dressed up — would reject for residential, but posting in case others see the same ad."
+    },
+    {
+      "subreddit": "SelfBuild",
+      "title": "Sale / Trafford garden with outline PP — private sale tips",
+      "permalink": "/r/SelfBuild/comments/fixture005/sale_outline_pp/",
+      "selftext": "We have outline planning on a rear garden plot in Sale (Trafford), about 320 sq m, and want a quiet private sale rather than an agent. Guide around £220k. Looking for polite ways to reach serious self-builders without spamming Facebook groups. Mod delete if not allowed."
+    }
+  ],
+  "_meta": {
+    "note": "Hypothetical Reddit-style posts for offline smoke. Not live Reddit content. Phrases align with landowner / garden plot / no planning / private sale intents."
+  }
+}

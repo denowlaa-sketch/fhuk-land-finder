@@ -101,6 +101,7 @@ def run_pipeline(
     limit_queries: int | None = 20,
     results_per_query: int = 5,
     keywords_path=None,
+    queries: list[str] | None = None,
     use_all_fixtures: bool = False,
     fixtures_dir=None,
     conn=None,
@@ -111,9 +112,10 @@ def run_pipeline(
     Ownership confidence remains model/heuristic-driven; no invented contacts.
     """
     seed = load_keywords(keywords_path)
-    queries = expand_queries(seed)
+    resolved = list(queries) if queries is not None else expand_queries(seed)
     if limit_queries is not None:
-        queries = queries[: max(0, limit_queries)]
+        resolved = resolved[: max(0, limit_queries)]
+    queries = resolved
 
     hits = collect_hits(
         connector,
