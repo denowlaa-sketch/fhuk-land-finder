@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import json
 import os
 from typing import Any
 
-from .models import ExtractedLead
+from .models import ExtractedLead, SearchHit
 
 try:
     import psycopg
@@ -24,12 +25,42 @@ def connect():
     return psycopg.connect(url)
 
 
+def _infer_source_kind(source: str) -> str:
+    s = (source or "").lower()
+    if "reddit" in s:
+        return "REDDIT"
+    if "forum" in s:
+        return "FORUM"
+    if any(x in s for x in ("gumtree", "preloved", "freeads", "classified")):
+        return "CLASSIFIED"
+    if any(x in s for x in ("auction", "plotfinder", "plotbrowser")):
+        return "AUCTION"
+    if "facebook" in s or s.startswith("fb"):
+        return "FACEBOOK_URL"
+    if "fixture" in s:
+        return "FIXTURE"
+    if any(x in s for x in ("google", "bing", "search", "recorded")):
+        return "SEARCH"
+    if "manual" in s or "paste" in s:
+        return "MANUAL"
+    return "OTHER"
+
+
 def fetch_existing_hashes(conn) -> set[str]:
     with conn.cursor() as cur:
         cur.execute(
             "SELECT content_hash FROM leads WHERE content_hash IS NOT NULL"
         )
-        return {row[0] for row in cur.fetchall()}
+        hashes = {row[0] for row in cur.fetchall()}
+        try:
+            cur.execute(
+                "SELECT content_hash FROM discovery_prospects "
+                "WHERE content_hash IS NOT NULL"
+            )
+            hashes |= {row[0] for row in cur.fetchall()}
+        except Exception:
+            conn.rollback()
+        return hashes
 
 
 def fetch_existing_urls(conn) -> set[str]:
@@ -37,7 +68,125 @@ def fetch_existing_urls(conn) -> set[str]:
         cur.execute(
             "SELECT original_post_url FROM leads WHERE original_post_url IS NOT NULL"
         )
-        return {row[0] for row in cur.fetchall()}
+        urls = {row[0] for row in cur.fetchall()}
+        try:
+            cur.execute(
+                "SELECT source_url FROM discovery_prospects "
+                "WHERE source_url IS NOT NULL"
+            )
+            urls |= {row[0] for row in cur.fetchall()}
+        except Exception:
+            conn.rollback()
+        return urls
+
+
+def upsert_discovery_prospect(
+    conn,
+    hit: SearchHit,
+    lead: ExtractedLead | None = None,
+) -> dict[str, Any]:
+    """Write / update a Discovery inbox row (Solar-style pending import)."""
+    title = hit.title or (lead.location if lead else "Untitled prospect")
+    source_kind = _infer_source_kind(hit.source or (lead.source if lead else ""))
+    payload: dict[str, Any] = {}
+    preview_score = None
+    preview_assessment = None
+    location = None
+    content_hash = None
+    raw_text = hit.raw_text or hit.snippet
+
+    if lead:
+        payload = {
+            "location": lead.location,
+            "opportunity_type": lead.opportunity_type,
+            "land_size": lead.land_size,
+            "asking_price": lead.asking_price,
+            "planning_status": lead.planning_status,
+            "landowner_name": lead.landowner_name,
+            "contact": lead.contact,
+            "ownership_confidence": lead.ownership_confidence,
+            "seller_motivation": lead.seller_motivation,
+            "ai_rationale": lead.ai_rationale,
+        }
+        location = lead.location
+        content_hash = lead.content_hash
+        preview_assessment = lead.ai_assessment
+        raw_text = lead.raw_excerpt or raw_text
+        # Simple preview score aligned with Strong/Investigate/Reject.
+        preview_score = {"Strong": 85, "Investigate": 55, "Reject": 20}.get(
+            lead.ai_assessment, 40
+        )
+
+    with conn.cursor() as cur:
+        if hit.url:
+            cur.execute(
+                """
+                UPDATE discovery_prospects SET
+                  title = %s,
+                  location = %s,
+                  source = %s,
+                  source_kind = %s::lead_source,
+                  snippet = %s,
+                  raw_text = %s,
+                  query = %s,
+                  content_hash = COALESCE(%s, content_hash),
+                  preview_score = %s,
+                  preview_assessment = %s::ai_assessment,
+                  payload = %s::jsonb
+                WHERE source_url = %s AND imported_at IS NULL
+                RETURNING id
+                """,
+                (
+                    title,
+                    location,
+                    hit.source,
+                    source_kind,
+                    hit.snippet,
+                    raw_text,
+                    hit.query,
+                    content_hash,
+                    preview_score,
+                    preview_assessment,
+                    json.dumps(payload),
+                    hit.url,
+                ),
+            )
+            row = cur.fetchone()
+            if row:
+                conn.commit()
+                return {"id": str(row[0]), "created": False}
+
+        cur.execute(
+            """
+            INSERT INTO discovery_prospects (
+              title, location, source, source_kind, source_url,
+              snippet, raw_text, query, content_hash, preview_score,
+              preview_assessment, payload
+            ) VALUES (
+              %s, %s, %s, %s::lead_source, %s,
+              %s, %s, %s, %s, %s,
+              %s::ai_assessment, %s::jsonb
+            )
+            RETURNING id
+            """,
+            (
+                title,
+                location,
+                hit.source,
+                source_kind,
+                hit.url or None,
+                hit.snippet,
+                raw_text,
+                hit.query,
+                content_hash,
+                preview_score,
+                preview_assessment,
+                json.dumps(payload),
+            ),
+        )
+        row = cur.fetchone()
+    conn.commit()
+    return {"id": str(row[0]), "created": True}
 
 
 def insert_lead(conn, lead: ExtractedLead) -> dict[str, Any]:

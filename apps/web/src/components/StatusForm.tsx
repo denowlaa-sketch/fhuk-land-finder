@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { CONTACT_STATUSES, type ContactStatus } from "@/lib/types";
+import { PIPELINE_STATUSES, type PipelineStatus } from "@/lib/types";
 
 export function StatusForm({
   leadId,
@@ -10,17 +10,17 @@ export function StatusForm({
   readOnly,
 }: {
   leadId: string;
-  current: ContactStatus;
+  current: PipelineStatus;
   readOnly?: boolean;
 }) {
   const router = useRouter();
-  const [status, setStatus] = useState<ContactStatus>(current);
+  const [status, setStatus] = useState<PipelineStatus>(current);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   if (readOnly) {
     return (
-      <p className="meta-pill">
+      <p className="text-sm text-slate-500">
         Status updates require DATABASE_URL (fixture mode is read-only).
       </p>
     );
@@ -32,7 +32,7 @@ export function StatusForm({
     const res = await fetch(`/api/leads/${leadId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contact_status: status }),
+      body: JSON.stringify({ status }),
     });
     if (!res.ok) {
       const body = (await res.json().catch(() => null)) as
@@ -45,24 +45,31 @@ export function StatusForm({
   }
 
   return (
-    <form className="status-form" onSubmit={onSubmit}>
-      <label htmlFor="contact_status">Contact status</label>
+    <form className="flex flex-wrap items-center gap-2" onSubmit={onSubmit}>
+      <label htmlFor="pipeline_status" className="text-sm text-slate-600">
+        Pipeline status
+      </label>
       <select
-        id="contact_status"
+        id="pipeline_status"
         value={status}
-        onChange={(e) => setStatus(e.target.value as ContactStatus)}
+        onChange={(e) => setStatus(e.target.value as PipelineStatus)}
         disabled={pending}
+        className="rounded-md border border-slate-200 bg-white px-2 py-1.5 text-sm"
       >
-        {CONTACT_STATUSES.map((s) => (
+        {PIPELINE_STATUSES.map((s) => (
           <option key={s} value={s}>
             {s}
           </option>
         ))}
       </select>
-      <button type="submit" disabled={pending}>
+      <button
+        type="submit"
+        disabled={pending}
+        className="rounded-md bg-emerald-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-800 disabled:opacity-50"
+      >
         {pending ? "Saving…" : "Update"}
       </button>
-      {error ? <span className="badge Reject">{error}</span> : null}
+      {error ? <span className="text-xs text-rose-600">{error}</span> : null}
     </form>
   );
 }

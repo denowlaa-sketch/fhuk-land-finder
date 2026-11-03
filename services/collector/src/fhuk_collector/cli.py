@@ -114,6 +114,7 @@ def cmd_run(args: argparse.Namespace) -> int:
             use_all_fixtures=use_all_fixtures,
             fixtures_dir=fixtures_dir if use_all_fixtures else None,
             conn=conn,
+            as_leads=bool(getattr(args, "as_leads", False)),
         )
     finally:
         if conn is not None:
@@ -302,7 +303,13 @@ def build_parser() -> argparse.ArgumentParser:
         "--write",
         dest="dry_run",
         action="store_false",
-        help="Write leads to Postgres (requires DATABASE_URL)",
+        help="Write discovery_prospects to Postgres (requires DATABASE_URL + migration 002)",
+    )
+    p_run.add_argument(
+        "--as-leads",
+        action="store_true",
+        default=False,
+        help="With --write, insert CRM leads directly instead of the discovery inbox",
     )
     p_run.set_defaults(func=cmd_run)
 

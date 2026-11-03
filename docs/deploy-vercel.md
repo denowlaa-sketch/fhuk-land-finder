@@ -48,13 +48,14 @@ Use a **pooled** connection string for the dashboard (Neon “pooled”, Supabas
 ```bash
 export DATABASE_URL='postgresql://USER:PASSWORD@HOST/DB?sslmode=require'
 psql "$DATABASE_URL" -f db/migrations/001_leads.sql
+psql "$DATABASE_URL" -f db/migrations/002_crm_parity.sql
 ```
 
 ### Supabase
 
 1. Create a project at [supabase.com](https://supabase.com).
 2. **Project Settings → Database** → copy the URI (prefer the pooler / transaction mode URL for the app).
-3. Append `?sslmode=require` if missing, then run the same `psql … -f db/migrations/001_leads.sql`.
+3. Append `?sslmode=require` if missing, then run `001_leads.sql` and `002_crm_parity.sql`.
 
 ### Vercel Postgres
 
@@ -64,9 +65,10 @@ psql "$DATABASE_URL" -f db/migrations/001_leads.sql
 
 ```bash
 psql "$POSTGRES_URL_NON_POOLING" -f db/migrations/001_leads.sql
+psql "$POSTGRES_URL_NON_POOLING" -f db/migrations/002_crm_parity.sql
 ```
 
-`001_leads.sql` is **not fully idempotent** (enum `CREATE TYPE` will error on re-run). Run it once per empty database. To re-apply after a wipe, drop the database/schema first.
+`001_leads.sql` / `002_crm_parity.sql` are **not fully idempotent** (enum `CREATE TYPE` will error on re-run). Run each once per empty database (001 then 002). To re-apply after a wipe, drop the database/schema first.
 
 ## 2. Import the project on Vercel
 
@@ -103,7 +105,7 @@ If you use Vercel Postgres storage integration, either:
 
 ## 4. Deploy checklist
 
-- [ ] Migration applied once against empty DB (`db/migrations/001_leads.sql`)
+- [ ] Migrations applied once against empty DB (`001_leads.sql` then `002_crm_parity.sql`)
 - [ ] Vercel Root Directory = `apps/web`
 - [ ] `DATABASE_URL` set (pooled + SSL)
 - [ ] Optional `OPENAI_API_KEY` for paste analysis

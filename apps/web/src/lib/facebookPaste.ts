@@ -1,3 +1,4 @@
+import { analyseLead } from "./scoring";
 import type {
   AiAssessment,
   Lead,
@@ -311,6 +312,7 @@ export async function analyzePaste(
 
 export function analysisToPreviewLead(analysis: PasteAnalysis): Lead {
   const now = new Date().toISOString();
+  const scored = analyseLead(analysis);
   return {
     id: "preview",
     ref: "FHUK-PREVIEW",
@@ -320,6 +322,7 @@ export function analysisToPreviewLead(analysis: PasteAnalysis): Lead {
     asking_price: analysis.asking_price,
     planning_status: analysis.planning_status,
     source: analysis.source,
+    source_kind: "FACEBOOK_URL",
     original_post_url: analysis.original_post_url,
     landowner_name: analysis.landowner_name,
     contact: analysis.contact,
@@ -328,7 +331,15 @@ export function analysisToPreviewLead(analysis: PasteAnalysis): Lead {
     ai_assessment: analysis.ai_assessment,
     ai_rationale: analysis.ai_rationale,
     date_discovered: now,
+    status: "NEW",
     contact_status: "Not contacted",
+    score: scored.score,
+    category: scored.category,
+    qualification_label: scored.qualification_label,
+    reasons: scored.reasons,
+    unknowns: scored.unknowns,
+    pipeline_version: scored.pipeline_version,
+    last_analysed_at: now,
     raw_excerpt: analysis.raw_excerpt,
     created_at: now,
     updated_at: now,

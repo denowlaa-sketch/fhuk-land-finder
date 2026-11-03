@@ -12,6 +12,7 @@ from .models import ExtractedLead, SearchHit
 
 ResultStatus = Literal[
     "inserted",
+    "discovery",
     "dry_run",
     "duplicate_url",
     "duplicate_hash",
@@ -61,6 +62,7 @@ class PipelineSummary:
             "hit_count": self.hit_count,
             "count": len(self.results),
             "inserted": sum(1 for r in self.results if r.status == "inserted"),
+            "discovery": sum(1 for r in self.results if r.status == "discovery"),
             "dry_run": sum(1 for r in self.results if r.status == "dry_run"),
             "duplicates": sum(
                 1
@@ -105,9 +107,13 @@ def run_pipeline(
     use_all_fixtures: bool = False,
     fixtures_dir=None,
     conn=None,
+    as_leads: bool = False,
 ) -> PipelineSummary:
     """
     Greater Manchester path: keywords → search → extract/score → dedupe → store.
+
+    Default write target is discovery_prospects (Solar-style inbox). Pass
+    as_leads=True to insert CRM leads directly (legacy smoke path).
 
     Ownership confidence remains model/heuristic-driven; no invented contacts.
     """
@@ -163,10 +169,34 @@ def run_pipeline(
         from . import db as dbmod
         from . import notify as notifymod
 
-        inserted = dbmod.insert_lead(conn, lead)
         existing_hashes.add(lead.content_hash)
         if lead.original_post_url:
             existing_urls.add(lead.original_post_url)
+
+        if not as_leads:
+            try:
+                prospect = dbmod.upsert_discovery_prospect(conn, hit, lead)
+            except Exception as exc:
+                # Pre-migration DBs: fall back to direct lead insert.
+                if "discovery_prospects" not in str(exc) and "lead_source" not in str(
+                    exc
+                ):
+                    raise
+                conn.rollback()
+                as_leads = True
+            else:
+                results.append(
+                    PipelineResult(
+                        status="discovery",
+                        hit=hit,
+                        lead=lead,
+                        id=prospect["id"],
+                        detail="discovery_inbox",
+                    )
+                )
+                continue
+
+        inserted = dbmod.insert_lead(conn, lead)
         notifymod.maybe_notify_lead(
             ref=inserted["ref"],
             location=lead.location,

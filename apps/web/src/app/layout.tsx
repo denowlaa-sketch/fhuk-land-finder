@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
+import { Sidebar } from "@/components/Sidebar";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "FHUK Land Finder",
   description:
-    "Off-market UK land sourcing dashboard for Flipping Homes UK — discovery and qualification.",
+    "Off-market UK land sourcing CRM for Flipping Homes UK — discovery, score, pipeline.",
 };
 
 export default function RootLayout({
@@ -27,20 +28,12 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <main>
-          <header className="site-header">
-            <a className="brand" href="/">
-              Flipping Homes UK
-              <span>Land Finder — discovery &amp; qualification</span>
-            </a>
-            <nav className="site-nav" aria-label="Primary">
-              <a href="/leads">Leads</a>
-              <a href="/paste">Facebook paste</a>
-              <a href="/settings">Settings</a>
-            </nav>
-          </header>
-          {children}
-        </main>
+        <div className="flex min-h-screen">
+          <Sidebar />
+          <div className="flex min-w-0 flex-1 flex-col">
+            <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">{children}</main>
+          </div>
+        </div>
       </body>
     </html>
   );

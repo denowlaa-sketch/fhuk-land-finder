@@ -6,29 +6,29 @@ Off-market UK land sourcing for **Flipping Homes UK**. Discovery and AI qualific
 
 | Layer | Choice |
 | ----- | ------ |
-| Dashboard | Next.js App Router (TypeScript) — `apps/web` |
-| Collectors | Python — `services/collector` |
+| Dashboard | Next.js App Router + Tailwind — `apps/web` (Vercel Root Directory) |
+| Collectors | Python — `services/collector` → Discovery inbox |
 | Database | PostgreSQL — `db/migrations` |
-| Extraction / scoring | OpenAI API |
+| Extraction / scoring | OpenAI extract + deterministic land rule scorer (reasons / unknowns) |
 | Search | Pluggable: Google CSE / Bing / Reddit / forums / classifieds / auctions / recorded / fixtures |
 
 ## Layout
 
 ```
-apps/web/                      Next.js leads list, detail, contact-status pipeline
-services/collector/            Keyword seed, search connectors, extract/score, dedupe
+apps/web/                      Sidebar CRM: Dashboard, Leads, Discovery, Settings (+ Companies/Contacts stubs)
+services/collector/            Keyword seed, search connectors, extract/score → discovery_prospects
 services/collector/samples/    Recorded Google CSE / Bing / Reddit / forums / classifieds / auctions JSON for offline runs
-db/migrations/                 SQL schema for leads (FHUK-NNNN refs)
+db/migrations/                 SQL schema (leads, lead_analyses, discovery_prospects)
 data/keywords/                 Greater Manchester phrase × town seed
 fixtures/                      Five hypothetical example posts (+ facebook paste fixtures)
 .env.example                   Required environment variables
 ```
 
-## Lead fields
+## Lead / CRM fields
 
-`FHUK-NNNN` ref, location, opportunity type, land size, asking price, planning status, source, original post URL, landowner name, contact, ownership confidence, seller motivation, AI assessment (`Strong` / `Investigate` / `Reject`), date discovered, contact status pipeline (`Not contacted` → … → `Rejected`).
+`FHUK-NNNN` ref, location, opportunity type, land size, asking price, planning status, source / source kind, original post URL, landowner name, contact, ownership confidence, seller motivation, AI assessment (`Strong` / `Investigate` / `Reject` mapped onto qualification), numeric **score** 0–100, **category** A–D, **qualification** label, **reasons** / **unknowns** JSON, analysis history, pipeline status `NEW → CONTACTED → QUALIFIED → PROPOSAL → NEGOTIATION → WON | LOST`.
 
-Ownership confidence stays honest: confirmed / likely / possible / unknown — never invented from thin snippets.
+Ownership confidence stays honest: confirmed / likely / possible / unknown — never invent contact/price facts (show **Unknown**).
 
 ## Prerequisites
 
@@ -48,6 +48,7 @@ cp .env.example .env
 ```bash
 createdb fhuk_land_finder
 psql "$DATABASE_URL" -f db/migrations/001_leads.sql
+psql "$DATABASE_URL" -f db/migrations/002_crm_parity.sql
 ```
 
 ### Web dashboard
@@ -56,12 +57,12 @@ psql "$DATABASE_URL" -f db/migrations/001_leads.sql
 cd apps/web && npm install && npm run dev
 ```
 
-Open [http://localhost:3000/leads](http://localhost:3000/leads).
+Open [http://localhost:3000/](http://localhost:3000/) (Dashboard). Also: `/leads`, `/discovery`, `/settings`, `/paste`.
 
 | `DATABASE_URL` | Dashboard source |
 | -------------- | ---------------- |
-| unset / unreachable | Fixture leads (read-only status) |
-| set + migrated | Live Postgres rows (refresh after collector `--write`) |
+| unset / unreachable | Fixture leads (read-only status); Discovery shows fixture/sample inbox |
+| set + migrated | Live Postgres rows; collector `--write` fills Discovery → Import creates leads |
 
 ### Collector
 
@@ -85,9 +86,11 @@ cd apps/web && npm run dev
 cd services/collector && source .venv/bin/activate
 fhuk-collector run --provider recorded --limit-queries 10
 
-# Persist when Postgres is ready
+# Persist when Postgres is ready (fills Discovery inbox after migration 002)
 fhuk-collector run --provider recorded --limit-queries 10 --write
-# then refresh http://localhost:3000/leads
+# then open http://localhost:3000/discovery → Import
+# Legacy: write straight into CRM leads
+fhuk-collector run --provider recorded --limit-queries 10 --write --as-leads
 ```
 
 Equivalent with fixtures (full post text, skips keyword search loop):
@@ -204,7 +207,7 @@ Production dashboard is **`apps/web`** on Vercel. Full checklist (Root Directory
 
 Quick path:
 
-1. Create hosted Postgres → run `psql "$DATABASE_URL" -f db/migrations/001_leads.sql` once.
+1. Create hosted Postgres → run `001_leads.sql` then `002_crm_parity.sql` once.
 2. Import this repo on Vercel → **Settings → Build and Deployment → Root Directory = `apps/web`** (UI only — `rootDirectory` is not valid in `vercel.json`).
 3. Framework **Next.js**; Install `npm ci` / Build `npm run build` (defaults once Root Directory is correct; also set in `apps/web/vercel.json`).
 4. Set env vars (no secrets in git): `DATABASE_URL` (pooled + `sslmode=require`), optional `OPENAI_API_KEY`.
