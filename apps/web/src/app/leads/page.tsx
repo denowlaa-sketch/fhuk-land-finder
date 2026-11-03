@@ -1,88 +1,66 @@
+import { Suspense } from "react";
 import Link from "next/link";
+import { LeadFilters } from "@/components/LeadFilters";
+import { LeadsTable } from "@/components/LeadsTable";
+import { PageHeader } from "@/components/PageHeader";
 import { fetchLeads } from "@/lib/leads";
+import type {
+  LeadCategory,
+  PipelineStatus,
+  QualificationLabel,
+} from "@/lib/types";
 
-/** Always re-read DB/fixtures so a collector run shows up on refresh. */
 export const dynamic = "force-dynamic";
 
-function formatPrice(value: number | null): string {
-  if (value === null) return "—";
-  return new Intl.NumberFormat("en-GB", {
-    style: "currency",
-    currency: "GBP",
-    maximumFractionDigits: 0,
-  }).format(value);
-}
+export default async function LeadsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const sp = await searchParams;
+  const filters = {
+    status: (typeof sp.status === "string" ? sp.status : "") as
+      | PipelineStatus
+      | "",
+    category: (typeof sp.category === "string" ? sp.category : "") as
+      | LeadCategory
+      | "",
+    qualification: (typeof sp.qualification === "string"
+      ? sp.qualification
+      : "") as QualificationLabel | "",
+    search: typeof sp.q === "string" ? sp.q : "",
+    minScore:
+      typeof sp.minScore === "string" && sp.minScore !== ""
+        ? Number(sp.minScore)
+        : undefined,
+  };
 
-function formatDate(iso: string): string {
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(new Date(iso));
-}
-
-export default async function LeadsPage() {
-  const { leads, source } = await fetchLeads();
+  const { leads, source } = await fetchLeads(filters);
 
   return (
     <>
-      <h1>Leads</h1>
-      <p className="lede">
-        Off-market UK land opportunities for Greater Manchester pilot.
-        Showing {leads.length} lead{leads.length === 1 ? "" : "s"} from{" "}
-        {source === "database" ? "PostgreSQL" : "fixtures (no DATABASE_URL)"}.
-        {source === "database"
-          ? " Refresh after fhuk-collector run --write to see new rows."
-          : " Set DATABASE_URL and migrate to load ingested leads."}{" "}
-        <Link href="/paste">Paste a Facebook post</Link> to analyse without
-        scraping. Email alerts for Strong/Investigate leads: see{" "}
-        <Link href="/settings">Settings</Link>.
-      </p>
+      <PageHeader
+        title="Leads"
+        description={
+          <>
+            CRM pipeline for off-market land plots. Showing {leads.length} from{" "}
+            {source === "database" ? "PostgreSQL" : "fixtures"}.{" "}
+            <Link href="/paste" className="font-medium">
+              Facebook paste
+            </Link>
+          </>
+        }
+      />
 
-      {leads.length === 0 ? (
-        <div className="empty">
-          No leads yet. Smoke path:{" "}
-          <code>fhuk-collector run --provider recorded --write</code> then refresh
-          this page.
-        </div>
-      ) : (
-        <table className="leads-table">
-          <thead>
-            <tr>
-              <th>Ref</th>
-              <th>Location</th>
-              <th>Type</th>
-              <th>Size</th>
-              <th>Price</th>
-              <th>AI</th>
-              <th>Status</th>
-              <th>Discovered</th>
-            </tr>
-          </thead>
-          <tbody>
-            {leads.map((lead) => (
-              <tr key={lead.id}>
-                <td>
-                  <Link className="ref" href={`/leads/${lead.id}`}>
-                    {lead.ref}
-                  </Link>
-                </td>
-                <td>{lead.location}</td>
-                <td>{lead.opportunity_type.replace("_", " ")}</td>
-                <td>{lead.land_size ?? "—"}</td>
-                <td>{formatPrice(lead.asking_price)}</td>
-                <td>
-                  <span className={`badge ${lead.ai_assessment}`}>
-                    {lead.ai_assessment}
-                  </span>
-                </td>
-                <td>{lead.contact_status}</td>
-                <td>{formatDate(lead.date_discovered)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+      <Suspense
+        fallback={
+          <div className="mb-4 h-20 rounded-lg border border-slate-200 bg-white" />
+        }
+      >
+        <LeadFilters basePath="/leads" />
+      </Suspense>
+
+      <LeadsTable leads={leads} />
     </>
   );
 }

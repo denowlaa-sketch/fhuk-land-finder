@@ -1,104 +1,30 @@
-:root {
-  --bg: #f3efe6;
-  --bg-deep: #e7e0d2;
-  --ink: #1c2420;
-  --muted: #5a655e;
-  --line: #c9c0b0;
-  --panel: #fffdf8;
-  --accent: #1f6b4a;
-  --accent-ink: #f4fff8;
-  --strong: #1f6b4a;
-  --investigate: #8a5a12;
-  --reject: #8a2e2e;
-  --radius: 6px;
+@import "tailwindcss";
+
+@theme {
   --font-display: "Fraunces", "Iowan Old Style", "Palatino Linotype", serif;
-  --font-body: "Source Sans 3", "Source Sans Pro", "Segoe UI", sans-serif;
+  --font-sans: "Source Sans 3", "Source Sans Pro", "Segoe UI", sans-serif;
+  --color-fhuk: #1f6b4a;
 }
 
-* {
-  box-sizing: border-box;
+@layer base {
+  html,
+  body {
+    @apply m-0 min-h-full bg-slate-100 text-slate-900 antialiased;
+    font-family: var(--font-sans);
+  }
+
+  a {
+    @apply text-emerald-700 underline-offset-2;
+  }
 }
 
-html,
-body {
-  margin: 0;
-  padding: 0;
-  min-height: 100%;
-  background:
-    radial-gradient(1200px 500px at 10% -10%, #dfece4 0%, transparent 55%),
-    linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
-  color: var(--ink);
-  font-family: var(--font-body);
-  font-size: 16px;
-  line-height: 1.5;
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display);
+  }
 }
 
-a {
-  color: var(--accent);
-  text-decoration-thickness: 1px;
-  text-underline-offset: 2px;
-}
-
-a:hover {
-  color: #145038;
-}
-
-main {
-  width: min(1100px, calc(100% - 2rem));
-  margin: 0 auto;
-  padding: 2rem 0 4rem;
-}
-
-.site-header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--line);
-}
-
-.brand {
-  font-family: var(--font-display);
-  font-size: 1.65rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  color: var(--ink);
-  text-decoration: none;
-}
-
-.brand span {
-  display: block;
-  margin-top: 0.15rem;
-  font-family: var(--font-body);
-  font-size: 0.85rem;
-  font-weight: 400;
-  letter-spacing: 0.02em;
-  color: var(--muted);
-}
-
-.meta-pill {
-  font-size: 0.8rem;
-  color: var(--muted);
-}
-
-.site-nav {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-  font-size: 0.95rem;
-}
-
-.site-nav a {
-  color: var(--muted);
-  text-decoration: none;
-}
-
-.site-nav a:hover {
-  color: var(--accent);
-}
-
+/* Paste form legacy helpers kept for /paste */
 .paste-panel {
   max-width: 42rem;
 }
@@ -109,7 +35,7 @@ main {
   font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--muted);
+  color: #64748b;
 }
 
 .paste-input,
@@ -117,10 +43,10 @@ main {
   width: 100%;
   font: inherit;
   padding: 0.55rem 0.7rem;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--panel);
-  color: var(--ink);
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  background: #fff;
+  color: #0f172a;
 }
 
 .paste-textarea {
@@ -128,197 +54,10 @@ main {
   line-height: 1.45;
 }
 
-.status-form button.secondary {
-  background: var(--panel);
-  color: var(--ink);
-  border-color: var(--line);
-}
-
-.status-form button.secondary:hover {
-  background: #f7f2e8;
-  color: var(--ink);
-}
-
 .paste-result {
   margin-top: 1.75rem;
   padding-top: 1.25rem;
-  border-top: 1px solid var(--line);
-}
-
-h1,
-h2 {
-  font-family: var(--font-display);
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  margin: 0 0 0.5rem;
-}
-
-h1 {
-  font-size: 1.85rem;
-}
-
-.lede {
-  color: var(--muted);
-  margin: 0 0 1.5rem;
-  max-width: 42rem;
-}
-
-.leads-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  overflow: hidden;
-}
-
-.leads-table th,
-.leads-table td {
-  text-align: left;
-  padding: 0.75rem 0.9rem;
-  border-bottom: 1px solid var(--line);
-  vertical-align: top;
-}
-
-.leads-table th {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--muted);
-  background: #f7f2e8;
-}
-
-.leads-table tr:last-child td {
-  border-bottom: none;
-}
-
-.leads-table a.ref {
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.badge {
-  display: inline-block;
-  font-size: 0.78rem;
-  font-weight: 600;
-  padding: 0.15rem 0.45rem;
-  border-radius: 4px;
-  border: 1px solid transparent;
-}
-
-.badge.Strong {
-  color: var(--strong);
-  background: #e4f4eb;
-  border-color: #b7dbc7;
-}
-
-.badge.Investigate {
-  color: var(--investigate);
-  background: #f7eedc;
-  border-color: #e2c894;
-}
-
-.badge.Reject {
-  color: var(--reject);
-  background: #f7e4e4;
-  border-color: #e0b0b0;
-}
-
-.detail-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1rem;
-  margin: 1.25rem 0;
-}
-
-.field {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 0.85rem 1rem;
-}
-
-.field dt {
-  margin: 0;
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--muted);
-}
-
-.field dd {
-  margin: 0.25rem 0 0;
-  font-size: 1rem;
-}
-
-.excerpt {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 1rem 1.1rem;
-  white-space: pre-wrap;
-}
-
-.status-form {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  align-items: center;
-  margin: 1.25rem 0;
-}
-
-.status-form select,
-.status-form button {
-  font: inherit;
-  padding: 0.45rem 0.7rem;
-  border-radius: var(--radius);
-  border: 1px solid var(--line);
-  background: var(--panel);
-  color: var(--ink);
-}
-
-.status-form button {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--accent-ink);
-  cursor: pointer;
-}
-
-.status-form button:hover {
-  background: #145038;
-}
-
-.empty {
-  padding: 2rem;
-  background: var(--panel);
-  border: 1px dashed var(--line);
-  border-radius: var(--radius);
-  color: var(--muted);
-}
-
-.back {
-  display: inline-block;
-  margin-bottom: 1rem;
-  color: var(--muted);
-  text-decoration: none;
-}
-
-.back:hover {
-  color: var(--accent);
-}
-
-.settings-block {
-  margin: 0 0 2rem;
-  max-width: 42rem;
-}
-
-.settings-block h2 {
-  font-size: 1.25rem;
-  margin-bottom: 0.75rem;
-}
-
-.notify-toggle {
-  margin-top: 0.5rem;
+  border-top: 1px solid #e2e8f0;
 }
 
 .notify-toggle-label {
@@ -326,21 +65,10 @@ h1 {
   align-items: flex-start;
   gap: 0.55rem;
   font-size: 1rem;
-  color: var(--ink);
+  color: #0f172a;
   cursor: pointer;
 }
 
 .notify-toggle-label input {
   margin-top: 0.25rem;
-}
-
-@media (max-width: 720px) {
-  .leads-table {
-    display: block;
-    overflow-x: auto;
-  }
-
-  .brand {
-    font-size: 1.35rem;
-  }
 }

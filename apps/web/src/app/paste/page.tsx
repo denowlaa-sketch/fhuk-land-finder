@@ -1,16 +1,16 @@
-import Link from "next/link";
+import { PageHeader } from "@/components/PageHeader";
 import { PasteForm } from "@/components/PasteForm";
-
-export const dynamic = "force-dynamic";
 
 export default function PastePage() {
   return (
     <>
-      <Link className="back" href="/leads">
-        ← All leads
-      </Link>
-      <h1>Facebook paste</h1>
-      <PasteForm />
+      <PageHeader
+        title="Facebook paste"
+        description="Compliant intake: paste a public post URL (optional) and the text you copied. No Graph API or group scrapers."
+      />
+      <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+        <PasteForm />
+      </div>
     </>
   );
 }

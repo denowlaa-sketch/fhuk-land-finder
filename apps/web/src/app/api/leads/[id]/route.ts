@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { setLeadStatus } from "@/lib/leads";
-import { CONTACT_STATUSES, type ContactStatus } from "@/lib/types";
+import {
+  CONTACT_STATUSES,
+  CONTACT_TO_STATUS,
+  PIPELINE_STATUSES,
+  type ContactStatus,
+  type PipelineStatus,
+} from "@/lib/types";
 
 export async function PATCH(
   request: Request,
@@ -14,17 +20,24 @@ export async function PATCH(
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const status =
-    typeof body === "object" &&
-    body !== null &&
-    "contact_status" in body &&
-    typeof (body as { contact_status: unknown }).contact_status === "string"
-      ? ((body as { contact_status: string }).contact_status as ContactStatus)
-      : null;
+  const obj =
+    typeof body === "object" && body !== null
+      ? (body as Record<string, unknown>)
+      : {};
 
-  if (!status || !CONTACT_STATUSES.includes(status)) {
+  let status: PipelineStatus | null = null;
+  if (typeof obj.status === "string" && PIPELINE_STATUSES.includes(obj.status as PipelineStatus)) {
+    status = obj.status as PipelineStatus;
+  } else if (
+    typeof obj.contact_status === "string" &&
+    CONTACT_STATUSES.includes(obj.contact_status as ContactStatus)
+  ) {
+    status = CONTACT_TO_STATUS[obj.contact_status as ContactStatus];
+  }
+
+  if (!status) {
     return NextResponse.json(
-      { error: "contact_status must be a valid pipeline value" },
+      { error: "status must be a valid pipeline value (NEW…WON/LOST)" },
       { status: 400 },
     );
   }
