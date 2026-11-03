@@ -12,21 +12,55 @@ import { analyseLead } from "./scoring";
 import { loadFixtureLead, loadFixtureLeads } from "./fixtures";
 import type { Lead, LeadAnalysis, PipelineStatus } from "./types";
 
+export type LeadDataSource = "database" | "fixtures";
+
+/** Short operator-facing DB failure text: code + message, no connection secrets. */
+export function safeDbErrorMessage(err: unknown): string {
+  const parts: string[] = [];
+  if (err && typeof err === "object") {
+    const e = err as { code?: unknown; message?: unknown };
+    if (typeof e.code === "string" && e.code.trim()) parts.push(e.code.trim());
+    if (typeof e.message === "string" && e.message.trim()) {
+      parts.push(e.message.trim());
+    }
+  }
+  let msg = parts.join(": ") || String(err);
+  msg = msg
+    .replace(/postgres(?:ql)?:\/\/[^\s"'<>]+/gi, "[redacted-url]")
+    .replace(/(password|pwd|pass)\s*[=:]\s*\S+/gi, "$1=[redacted]")
+    .replace(/\b[A-Za-z0-9_-]{8,}:[^@\s/]{4,}@/g, "[redacted-userpass]@");
+  if (msg.length > 240) msg = `${msg.slice(0, 237)}...`;
+  return msg;
+}
+
 export async function fetchLeads(filters: LeadFilters = {}): Promise<{
   leads: Lead[];
-  source: "database" | "fixtures";
+  source: LeadDataSource;
+  /** True when process.env.DATABASE_URL is present (server-only). */
+  databaseConfigured: boolean;
+  /** Set when DATABASE_URL exists but the query/connection failed. */
+  dbError?: string;
 }> {
-  if (getPool()) {
+  const databaseConfigured = Boolean(getPool());
+  if (databaseConfigured) {
     try {
       const leads = await listLeads(filters);
-      return { leads, source: "database" };
-    } catch {
+      return { leads, source: "database", databaseConfigured };
+    } catch (err) {
       // Fall through to fixtures if DB is unreachable / pre-migration.
+      const dbError = safeDbErrorMessage(err);
+      console.error(
+        "[fetchLeads] DATABASE_URL set but Postgres query failed:",
+        dbError,
+      );
+      let leads = await loadFixtureLeads();
+      leads = applyFixtureFilters(leads, filters);
+      return { leads, source: "fixtures", databaseConfigured, dbError };
     }
   }
   let leads = await loadFixtureLeads();
   leads = applyFixtureFilters(leads, filters);
-  return { leads, source: "fixtures" };
+  return { leads, source: "fixtures", databaseConfigured };
 }
 
 function applyFixtureFilters(leads: Lead[], filters: LeadFilters): Lead[] {
@@ -62,19 +96,29 @@ function applyFixtureFilters(leads: Lead[], filters: LeadFilters): Lead[] {
   });
 }
 
-export async function fetchLead(
-  id: string,
-): Promise<{ lead: Lead | null; source: "database" | "fixtures" }> {
-  if (getPool()) {
+export async function fetchLead(id: string): Promise<{
+  lead: Lead | null;
+  source: LeadDataSource;
+  databaseConfigured: boolean;
+  dbError?: string;
+}> {
+  const databaseConfigured = Boolean(getPool());
+  if (databaseConfigured) {
     try {
       const lead = await getLeadById(id);
-      if (lead) return { lead, source: "database" };
-    } catch {
-      // Fall through.
+      if (lead) return { lead, source: "database", databaseConfigured };
+    } catch (err) {
+      const dbError = safeDbErrorMessage(err);
+      console.error(
+        "[fetchLead] DATABASE_URL set but Postgres query failed:",
+        dbError,
+      );
+      const lead = await loadFixtureLead(id);
+      return { lead, source: "fixtures", databaseConfigured, dbError };
     }
   }
   const lead = await loadFixtureLead(id);
-  return { lead, source: "fixtures" };
+  return { lead, source: "fixtures", databaseConfigured };
 }
 
 export async function fetchLeadAnalyses(

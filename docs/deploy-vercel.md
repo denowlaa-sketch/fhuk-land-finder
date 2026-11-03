@@ -101,7 +101,16 @@ Never commit real values. Locally: `cp .env.example .env` at the repo root (or `
 If you use Vercel Postgres storage integration, either:
 
 - set `DATABASE_URL` = the pooled `POSTGRES_URL`, or  
-- keep both and ensure the app reads `DATABASE_URL` (this codebase only reads `DATABASE_URL`).
+- keep both and ensure the app reads `DATABASE_URL` (this codebase only reads `DATABASE_URL` — not `POSTGRES_URL` / `POSTGRES_PRISMA_URL`).
+
+**Dashboard still says fixtures after setting env?** Common causes:
+
+1. Variable named `POSTGRES_URL` only — copy/alias to `DATABASE_URL`.
+2. Env scoped to Preview while you are on the Production URL (or the reverse).
+3. Env added without a **Redeploy** (existing serverless isolates keep the old env).
+4. `DATABASE_URL` is present but connect/query fails (SSL, auth, or migration not run) — the UI used to swallow that and print “fixtures”; it now shows an amber banner with the Postgres error. Check Vercel function logs for `[fetchLeads] DATABASE_URL set but Postgres query failed`.
+
+`DATABASE_URL` is **server-only** (`process.env.DATABASE_URL` in `apps/web/src/lib/db.ts`). Do not use `NEXT_PUBLIC_DATABASE_URL`.
 
 ## 4. Deploy checklist
 

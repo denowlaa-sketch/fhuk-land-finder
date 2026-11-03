@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { AnalyseAllButton } from "@/components/AnalyseAllButton";
+import { DataSourceBanner } from "@/components/DataSourceBanner";
 import { LeadCharts } from "@/components/LeadCharts";
 import { LeadFilters } from "@/components/LeadFilters";
 import { LeadsTable } from "@/components/LeadsTable";
@@ -38,13 +39,20 @@ export default async function DashboardPage({
         : undefined,
   };
 
-  const { leads, source } = await fetchLeads(filters);
+  const { leads, source, databaseConfigured, dbError } =
+    await fetchLeads(filters);
   const avgScore =
     leads.length === 0
       ? 0
       : Math.round(leads.reduce((sum, l) => sum + l.score, 0) / leads.length);
   const qualified = leads.filter((l) => l.status === "QUALIFIED").length;
   const top = [...leads].sort((a, b) => b.score - a.score).slice(0, 3);
+  const sourceLabel =
+    source === "database"
+      ? "PostgreSQL"
+      : databaseConfigured
+        ? "fixtures (DATABASE_URL set — connection failed)"
+        : "fixtures (no DATABASE_URL)";
 
   return (
     <>
@@ -53,13 +61,19 @@ export default async function DashboardPage({
         description={
           <>
             Pipeline overview for Greater Manchester land opportunities. Data
-            from {source === "database" ? "PostgreSQL" : "fixtures"}.{" "}
+            from {sourceLabel}.{" "}
             <Link href="/discovery" className="font-medium text-emerald-700">
               Open Discovery inbox
             </Link>
           </>
         }
         actions={<AnalyseAllButton disabled={source === "fixtures"} />}
+      />
+
+      <DataSourceBanner
+        source={source}
+        databaseConfigured={databaseConfigured}
+        dbError={dbError}
       />
 
       <StatCards
