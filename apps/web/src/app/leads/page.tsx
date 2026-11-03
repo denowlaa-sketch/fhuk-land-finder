@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
+import { DataSourceBanner } from "@/components/DataSourceBanner";
 import { LeadFilters } from "@/components/LeadFilters";
 import { LeadsTable } from "@/components/LeadsTable";
 import { PageHeader } from "@/components/PageHeader";
@@ -35,7 +36,14 @@ export default async function LeadsPage({
         : undefined,
   };
 
-  const { leads, source } = await fetchLeads(filters);
+  const { leads, source, databaseConfigured, dbError } =
+    await fetchLeads(filters);
+  const sourceLabel =
+    source === "database"
+      ? "PostgreSQL"
+      : databaseConfigured
+        ? "fixtures (DATABASE_URL set — connection failed)"
+        : "fixtures (no DATABASE_URL)";
 
   return (
     <>
@@ -44,12 +52,18 @@ export default async function LeadsPage({
         description={
           <>
             CRM pipeline for off-market land plots. Showing {leads.length} from{" "}
-            {source === "database" ? "PostgreSQL" : "fixtures"}.{" "}
+            {sourceLabel}.{" "}
             <Link href="/paste" className="font-medium">
               Facebook paste
             </Link>
           </>
         }
+      />
+
+      <DataSourceBanner
+        source={source}
+        databaseConfigured={databaseConfigured}
+        dbError={dbError}
       />
 
       <Suspense
