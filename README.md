@@ -1,6 +1,6 @@
 # FHUK Land Finder
 
-Off-market UK land sourcing for **Flipping Homes UK**. Discovery and AI qualification only — no unofficial Facebook scrapers, no paid mapping/planning APIs, no automated outreach.
+Off-market UK land sourcing for **Flipping Homes UK**. Discovery and AI qualification — no unofficial Facebook scrapers, no paid mapping/planning APIs. Optional **PECR-safe** Facebook Instant Form → consent-gated call qualify (sandbox by default; live Twilio opt-in).
 
 ## Stack
 
@@ -18,7 +18,7 @@ Off-market UK land sourcing for **Flipping Homes UK**. Discovery and AI qualific
 apps/web/                      Sidebar CRM: Dashboard, Leads, Discovery, Settings (+ Companies/Contacts stubs)
 services/collector/            Keyword seed, search connectors, extract/score → discovery_prospects
 services/collector/samples/    Recorded Google CSE / Bing / Reddit / forums / classifieds / auctions JSON for offline runs
-db/migrations/                 SQL schema (leads, lead_analyses, discovery_prospects)
+db/migrations/                 SQL schema (leads, analyses, discovery, call_attempts)
 data/keywords/                 Greater Manchester phrase × town seed
 fixtures/                      Five hypothetical example posts (+ facebook paste fixtures)
 .env.example                   Required environment variables
@@ -49,6 +49,7 @@ cp .env.example .env
 createdb fhuk_land_finder
 psql "$DATABASE_URL" -f db/migrations/001_leads.sql
 psql "$DATABASE_URL" -f db/migrations/002_crm_parity.sql
+psql "$DATABASE_URL" -f db/migrations/003_facebook_calls.sql
 ```
 
 ### Web dashboard
@@ -57,7 +58,7 @@ psql "$DATABASE_URL" -f db/migrations/002_crm_parity.sql
 cd apps/web && npm install && npm run dev
 ```
 
-Open [http://localhost:3000/](http://localhost:3000/) (Dashboard). Also: `/leads`, `/discovery`, `/settings`, `/paste`.
+Open [http://localhost:3000/](http://localhost:3000/) (Dashboard). Also: `/facebook`, `/leads`, `/discovery`, `/settings`, `/paste`.
 
 | `DATABASE_URL` | Dashboard source |
 | -------------- | ---------------- |
@@ -157,6 +158,35 @@ fhuk-collector analyze-paste \
 
 The URL is stored as metadata only — **never fetched**. No Graph API, no group scrapers. Ownership/sale intent are not assumed from the link alone. Contacts only if voluntarily present in the pasted text. Labels: Strong / Investigate / Reject.
 
+### Facebook Instant Form → call qualify (PECR)
+
+Meta Lead Ads Instant Form webhook (or local simulate) → score → **call queue only when `consent_to_call` is true** and a phone is present. Sandbox script first; live Twilio behind `TWILIO_LIVE_DIALS=true`. Owner email only on call **QUALIFIED**. Seller is never emailed from this flow. `NO_ANSWER` / `CALLBACK` leave the lead `CONTACTED` so it reappears in the queue (ops recall — no spam redialer).
+
+```
+Meta Instant Form (or /facebook simulate)
+  → GET/POST /api/facebook/leadgen  |  POST /api/facebook/leads/simulate
+  → ingest (status NEW, source_kind FACEBOOK, consent_to_call + consent_at)
+  → form score only — no dial, no email
+
+Consented + phone + NEW|CONTACTED
+  → Call queue (/facebook)
+  → POST /api/calls/:id/start   (sandbox)  OR  POST /api/calls/:id/dial  (live)
+  → complete → QUALIFIED (owner email) | UNQUALIFIED (LOST) | NO_ANSWER|CALLBACK (stay CONTACTED)
+```
+
+| Variable | Purpose |
+| -------- | ------- |
+| `FACEBOOK_VERIFY_TOKEN` | Webhook `hub.verify_token` |
+| `FACEBOOK_PAGE_ACCESS_TOKEN` | Graph lead fetch |
+| `FACEBOOK_APP_SECRET` | Optional `X-Hub-Signature-256` |
+| `FACEBOOK_ALLOW_SIMULATE` | Prod gate for simulate API |
+| `TWILIO_ACCOUNT_SID` / `AUTH_TOKEN` / `PHONE_NUMBER` | Live dials |
+| `TWILIO_PUBLIC_BASE_URL` | Public HTTPS base for TwiML callbacks |
+| `TWILIO_LIVE_DIALS` | Must be `true` to allow live dial (default off) |
+| `OWNER_NOTIFY_EMAIL` | QUALIFIED owner alert (else `NOTIFY_EMAIL_TO`) |
+
+Apply migration `003_facebook_calls.sql`. UI: `/facebook`, `/facebook/calls/[id]`. Discovery/scraped numbers are **not** dialled.
+
 ## Email lead notifications
 
 When a **new** lead with AI assessment `Strong` or `Investigate` is written
@@ -207,10 +237,10 @@ Production dashboard is **`apps/web`** on Vercel. Full checklist (Root Directory
 
 Quick path:
 
-1. Create hosted Postgres → run `001_leads.sql` then `002_crm_parity.sql` once.
+1. Create hosted Postgres → run `001_leads.sql`, `002_crm_parity.sql`, then `003_facebook_calls.sql` once.
 2. Import this repo on Vercel → **Settings → Build and Deployment → Root Directory = `apps/web`** (UI only — `rootDirectory` is not valid in `vercel.json`).
 3. Framework **Next.js**; Install `npm ci` / Build `npm run build` (defaults once Root Directory is correct; also set in `apps/web/vercel.json`).
-4. Set env vars (no secrets in git): `DATABASE_URL` (pooled + `sslmode=require`), optional `OPENAI_API_KEY`.
+4. Set env vars (no secrets in git): `DATABASE_URL` (pooled + `sslmode=require`), optional `OPENAI_API_KEY`, optional Facebook/Twilio/email vars.
 5. Deploy; open `/leads` and confirm source is PostgreSQL.
 
 If deploy fails with `[NEXT_NO_VERSION] No Next.js version detected`, Root Directory is still the repo root — set it to `apps/web` in the Vercel UI and redeploy. See **[docs/deploy-vercel.md](docs/deploy-vercel.md)**.
@@ -225,5 +255,5 @@ cd services/collector && pytest
 
 ## Scope notes
 
-- In scope: GM keyword → pluggable public search (incl. classifieds, UK auction catalogues / specialist plot sites) → AI extract/score → dedupe → Postgres → dashboard refresh; Facebook **paste** analysis (no fetch); optional Strong/Investigate email alerts; Vercel + Postgres deploy path
-- Out of scope: unofficial Facebook scraping / Graph mass search, paid mapping/planning APIs, automated outreach, brittle HTML scrapes of auction/plot sites
+- In scope: GM keyword → pluggable public search (incl. classifieds, UK auction catalogues / specialist plot sites) → AI extract/score → dedupe → Postgres → dashboard refresh; Facebook **paste** analysis (no fetch); Facebook Instant Form webhook + PECR consent-gated sandbox/live call qualify + owner QUALIFIED email; optional Strong/Investigate email alerts; Vercel + Postgres deploy path
+- Out of scope: unofficial Facebook scraping / Graph mass search, paid mapping/planning APIs, cold dial of discovery/scraped numbers, brittle HTML scrapes of auction/plot sites

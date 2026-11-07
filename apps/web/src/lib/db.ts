@@ -114,6 +114,15 @@ function mapLead(row: QueryResultRow): Lead {
     raw_excerpt: row.raw_excerpt,
     created_at: new Date(row.created_at).toISOString(),
     updated_at: new Date(row.updated_at).toISOString(),
+    consent_to_call: Boolean(row.consent_to_call ?? false),
+    consent_at: row.consent_at
+      ? new Date(row.consent_at).toISOString()
+      : null,
+    facebook_lead_id: row.facebook_lead_id ?? null,
+    form_payload:
+      typeof row.form_payload === "object" && row.form_payload !== null
+        ? (row.form_payload as Record<string, unknown>)
+        : {},
   };
 }
 
@@ -406,6 +415,7 @@ function inferSourceKind(source: string): LeadSourceKind {
   ) {
     return "AUCTION";
   }
+  if (s.includes("instant_form") || s.includes("leadgen")) return "FACEBOOK";
   if (s.includes("facebook") || s.includes("fb")) return "FACEBOOK_URL";
   if (s.includes("fixture")) return "FIXTURE";
   if (
