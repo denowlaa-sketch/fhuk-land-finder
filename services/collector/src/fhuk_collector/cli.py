@@ -36,13 +36,19 @@ def _resolve_dry_run(args: argparse.Namespace) -> bool:
     return os.getenv("COLLECTOR_DRY_RUN", "true").lower() in {"1", "true", "yes"}
 
 
-def cmd_keywords(_: argparse.Namespace) -> int:
-    queries = expand_queries()
-    seed = load_keywords()
+def cmd_keywords(args: argparse.Namespace) -> int:
+    region = getattr(args, "region", None)
+    from .keywords import list_region_seeds, resolve_region_slugs
+
+    queries = expand_queries(region=region)
+    seed = load_keywords(region=region)
+    parts = list_region_seeds(region=region)
     print(
         json.dumps(
             {
                 "region": seed.get("region"),
+                "slugs": resolve_region_slugs(region),
+                "regions": [p.get("region") for p in parts],
                 "town_count": len(seed.get("towns", [])),
                 "phrase_count": len(seed.get("phrases", [])),
                 "query_count": len(queries),
@@ -107,13 +113,15 @@ def cmd_run(args: argparse.Namespace) -> int:
         recorded_path=Path(args.recorded).resolve() if args.recorded else None,
     )
 
+    region = getattr(args, "region", None)
+
     # Source-specific phrase sets aligned with the keyword library (+ extras).
     resolved_provider = getattr(connector, "name", provider or "")
     custom_queries = None
     if resolved_provider in {"reddit", "forums"}:
-        custom_queries = expand_reddit_queries()
+        custom_queries = expand_reddit_queries(region=region)
     elif resolved_provider in {"classifieds", "gumtree", "preloved", "freeads"}:
-        custom_queries = expand_classifieds_queries()
+        custom_queries = expand_classifieds_queries(region=region)
     elif resolved_provider in {
         "auctions",
         "auctionhouse",
@@ -122,7 +130,7 @@ def cmd_run(args: argparse.Namespace) -> int:
         "plotfinder",
         "plotbrowser",
     }:
-        custom_queries = expand_auctions_queries()
+        custom_queries = expand_auctions_queries(region=region)
 
     conn = None
     if not dry_run:
@@ -131,17 +139,28 @@ def cmd_run(args: argparse.Namespace) -> int:
         conn = dbmod.connect()
 
     try:
-        summary = run_pipeline(
-            connector,
-            dry_run=dry_run,
-            limit_queries=args.limit_queries,
-            results_per_query=args.results_per_query,
-            queries=custom_queries,
-            use_all_fixtures=use_all_fixtures,
-            fixtures_dir=fixtures_dir if use_all_fixtures else None,
-            conn=conn,
-            as_leads=bool(getattr(args, "as_leads", False)),
-        )
+        # Temporarily honour --region via env so load_keywords/pipeline agree.
+        prev_region = os.environ.get("COLLECTOR_REGION")
+        if region:
+            os.environ["COLLECTOR_REGION"] = region
+        try:
+            summary = run_pipeline(
+                connector,
+                dry_run=dry_run,
+                limit_queries=args.limit_queries,
+                results_per_query=args.results_per_query,
+                queries=custom_queries,
+                use_all_fixtures=use_all_fixtures,
+                fixtures_dir=fixtures_dir if use_all_fixtures else None,
+                conn=conn,
+                as_leads=bool(getattr(args, "as_leads", False)),
+            )
+        finally:
+            if region:
+                if prev_region is None:
+                    os.environ.pop("COLLECTOR_REGION", None)
+                else:
+                    os.environ["COLLECTOR_REGION"] = prev_region
     finally:
         if conn is not None:
             conn.close()
@@ -278,11 +297,17 @@ def cmd_seed_fixtures(args: argparse.Namespace) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="fhuk-collector",
-        description="FHUK Land Finder collector — GM search → extract → store",
+        description="FHUK Land Finder collector — UK multi-region search → extract → store",
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
     p_kw = sub.add_parser("keywords", help="Expand phrase × town queries")
+    p_kw.add_argument(
+        "--region",
+        default=None,
+        help="Keyword region slug(s): all | greater-manchester | west-yorkshire | … "
+        "(or comma-separated). Default: COLLECTOR_REGION or all.",
+    )
     p_kw.set_defaults(func=cmd_keywords)
 
     p_prov = sub.add_parser("providers", help="List search providers")
@@ -336,6 +361,12 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         default=False,
         help="With --write, insert CRM leads directly instead of the discovery inbox",
+    )
+    p_run.add_argument(
+        "--region",
+        default=None,
+        help="Keyword region slug(s): all | greater-manchester | west-yorkshire | … "
+        "(or comma-separated). Default: COLLECTOR_REGION or all.",
     )
     p_run.set_defaults(func=cmd_run)
 

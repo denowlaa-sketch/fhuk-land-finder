@@ -54,7 +54,7 @@ def test_pipeline_recorded_dry_run():
     )
     assert summary.provider == "recorded"
     assert summary.hit_count >= 1
-    assert summary.region == "Greater Manchester"
+    assert "Greater Manchester" in summary.region
     assert any(r.status == "dry_run" for r in summary.results)
     # Ownership confidence must be one of the honest enum values
     for r in summary.results:

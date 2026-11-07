@@ -60,8 +60,9 @@ export default async function DashboardPage({
         title="Dashboard"
         description={
           <>
-            Pipeline overview for Greater Manchester land opportunities. Data
-            from {sourceLabel}.{" "}
+            Pipeline overview for UK land opportunities across Greater
+            Manchester, West Yorkshire, Merseyside, Lancashire, Cheshire, and
+            the West Midlands. Data from {sourceLabel}.{" "}
             <Link href="/discovery" className="font-medium text-emerald-700">
               Open Discovery inbox
             </Link>

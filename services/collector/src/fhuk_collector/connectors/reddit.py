@@ -12,6 +12,9 @@ DEFAULT_SUBREDDITS = (
     "SelfBuild",
     "HousingUK",
     "manchester",
+    "leeds",
+    "Liverpool",
+    "birmingham",
     "UKProperty",
     "AskUK",
 )
@@ -64,7 +67,7 @@ class RedditSearchConnector:
             if user_agent is not None
             else os.getenv(
                 "REDDIT_USER_AGENT",
-                "fhuk-land-finder/0.1 (Greater Manchester land sourcing; contact: local-dev)",
+                "fhuk-land-finder/0.1 (UK land sourcing; contact: local-dev)",
             )
         ).strip()
         env_subs = os.getenv("REDDIT_SUBREDDITS", "")
@@ -182,7 +185,10 @@ class RedditSearchConnector:
             url = build_query_url(
                 OAUTH_SEARCH,
                 {
-                    "q": f"({query}) (UK OR Manchester OR Bolton OR \"self build\")",
+                    "q": (
+                        f"({query}) (UK OR Manchester OR Leeds OR Liverpool "
+                        f'OR Birmingham OR Preston OR Chester OR "self build")'
+                    ),
                     "sort": "new",
                     "limit": max(1, min(num, 25)),
                     "raw_json": 1,

@@ -110,12 +110,13 @@ def run_pipeline(
     as_leads: bool = False,
 ) -> PipelineSummary:
     """
-    Greater Manchester path: keywords → search → extract/score → dedupe → store.
+    Multi-region UK path: keywords → search → extract/score → dedupe → store.
 
     Default write target is discovery_prospects (Solar-style inbox). Pass
     as_leads=True to insert CRM leads directly (legacy smoke path).
 
     Ownership confidence remains model/heuristic-driven; no invented contacts.
+    Region set comes from COLLECTOR_REGION (default: all active keyword libraries).
     """
     seed = load_keywords(keywords_path)
     resolved = list(queries) if queries is not None else expand_queries(seed)
@@ -125,7 +126,7 @@ def run_pipeline(
 
     hits = collect_hits(
         connector,
-        queries=queries or ["Greater Manchester land for sale"],
+        queries=queries or ["UK land for sale"],
         results_per_query=results_per_query,
         use_all_fixtures=use_all_fixtures,
         fixtures_dir=fixtures_dir,
@@ -219,7 +220,7 @@ def run_pipeline(
 
     return PipelineSummary(
         provider=getattr(connector, "name", "unknown"),
-        region=str(seed.get("region", "Greater Manchester")),
+        region=str(seed.get("region", "UK")),
         query_count=len(queries),
         hit_count=len(hits),
         results=results,

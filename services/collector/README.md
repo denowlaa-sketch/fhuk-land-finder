@@ -1,6 +1,8 @@
 # FHUK collector
 
-Python worker: Greater Manchester keywords → pluggable public web search → OpenAI extract/score → URL/content-hash dedupe → Postgres.
+Python worker: multi-region UK keywords (GM + West Yorkshire / Merseyside / Lancashire / Cheshire / West Midlands) → pluggable public web search → OpenAI extract/score → URL/content-hash dedupe → Postgres.
+
+Region selection: `COLLECTOR_REGION=all` (default) or a slug / comma list (`greater-manchester`, `west-yorkshire`, …). `fhuk-collector keywords --region west-yorkshire` expands one library.
 
 ## Providers
 
@@ -100,7 +102,7 @@ GOOGLE_CSE_CX=...        # Programmable Search engine ID
 REDDIT_CLIENT_ID=...
 REDDIT_CLIENT_SECRET=...
 REDDIT_USER_AGENT=fhuk-land-finder/0.1 (by your-reddit-username)
-REDDIT_SUBREDDITS=SelfBuild,HousingUK,manchester,UKProperty,AskUK
+REDDIT_SUBREDDITS=SelfBuild,HousingUK,manchester,leeds,Liverpool,birmingham,UKProperty,AskUK
 REDDIT_ALLOW_PUBLIC_JSON=false
 ```
 

@@ -59,7 +59,7 @@ def prefers_private_landowner(text: str) -> bool:
 
 class ClassifiedsSearchConnector:
     """
-    Gumtree / Preloved / Freeads land ads for Greater Manchester.
+    Gumtree / Preloved / Freeads land ads for UK keyword regions (GM + neighbours).
 
     Default mode: offline recorded samples (hypothetical private landowner-style
     ads). Live mode (optional): Google CSE `site:` queries over public indexes —

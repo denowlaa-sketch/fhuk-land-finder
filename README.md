@@ -19,7 +19,8 @@ apps/web/                      Sidebar CRM: Dashboard, Leads, Discovery, Setting
 services/collector/            Keyword seed, search connectors, extract/score → discovery_prospects
 services/collector/samples/    Recorded Google CSE / Bing / Reddit / forums / classifieds / auctions JSON for offline runs
 db/migrations/                 SQL schema (leads, analyses, discovery, call_attempts)
-data/keywords/                 Greater Manchester phrase × town seed
+data/keywords/                 Multi-region phrase × town seeds (GM + WY/Merseyside/Lancs/Cheshire/WM)
+data/geography/                Coverage town tokens for extract/score heuristics
 fixtures/                      Five hypothetical example posts (+ facebook paste fixtures)
 .env.example                   Required environment variables
 ```
@@ -224,7 +225,7 @@ fhuk-collector run --provider recorded --limit-queries 5 --write
 
 | Capability | No keys | With keys |
 | ---------- | ------- | --------- |
-| Keyword expand (GM) | Yes | Yes |
+| Keyword expand (multi-region) | Yes | Yes |
 | Search | `recorded` / `fixtures` / `stub` / `reddit` (recorded) / `forums` / `classifieds` / `auctions` | `google`, `bing`, `reddit` (OAuth), `classifieds`/`auctions` live via CSE `site:` |
 | Facebook paste | Heuristic analyse + preview; save needs DB | OpenAI extract when `OPENAI_API_KEY` set |
 | Extract / score | Heuristic fallback | OpenAI (`OPENAI_API_KEY`) |
@@ -261,5 +262,5 @@ cd services/collector && pytest
 
 ## Scope notes
 
-- In scope: GM keyword → pluggable public search (incl. classifieds, UK auction catalogues / specialist plot sites) → AI extract/score → dedupe → Postgres → dashboard refresh; Facebook **paste** analysis (no fetch); Facebook Instant Form webhook + PECR consent-gated sandbox/live call qualify + owner QUALIFIED email; optional Strong/Investigate email alerts; Vercel + Postgres deploy path
+- In scope: multi-region UK keywords (Greater Manchester, West Yorkshire, Merseyside, Lancashire, Cheshire, West Midlands) → pluggable public search (incl. classifieds, UK auction catalogues / specialist plot sites) → AI extract/score → dedupe → Postgres → dashboard refresh; Facebook **paste** analysis (no fetch); Facebook Instant Form webhook + PECR consent-gated sandbox/live call qualify + owner QUALIFIED email; optional Strong/Investigate email alerts; Vercel + Postgres deploy path
 - Out of scope: unofficial Facebook scraping / Graph mass search, paid mapping/planning APIs, cold dial of discovery/scraped numbers, brittle HTML scrapes of auction/plot sites
