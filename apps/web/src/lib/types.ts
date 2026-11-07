@@ -85,6 +85,8 @@ export type LeadSourceKind =
   | "CLASSIFIED"
   | "AUCTION"
   | "FACEBOOK_URL"
+  /** Meta Instant Form leadgen (consent-gated call queue). */
+  | "FACEBOOK"
   | "FIXTURE"
   | "MANUAL"
   | "AI_DISCOVERY"
@@ -128,6 +130,11 @@ export interface Lead {
   raw_excerpt: string | null;
   created_at: string;
   updated_at: string;
+  /** PECR: Instant Form explicit call consent only. */
+  consent_to_call?: boolean;
+  consent_at?: string | null;
+  facebook_lead_id?: string | null;
+  form_payload?: Record<string, unknown>;
 }
 
 export interface LeadAnalysis {
