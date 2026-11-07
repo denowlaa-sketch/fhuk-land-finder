@@ -55,7 +55,33 @@ def cmd_keywords(_: argparse.Namespace) -> int:
 
 
 def cmd_providers(_: argparse.Namespace) -> int:
-    print(json.dumps(available_providers(), indent=2))
+    google_ready = bool(
+        (os.getenv("GOOGLE_CSE_API_KEY") or "").strip()
+        and (os.getenv("GOOGLE_CSE_CX") or "").strip()
+    )
+    reddit_ready = bool(
+        (os.getenv("REDDIT_CLIENT_ID") or "").strip()
+        and (os.getenv("REDDIT_CLIENT_SECRET") or "").strip()
+    )
+    print(
+        json.dumps(
+            {
+                "providers": available_providers(),
+                "live_readiness": {
+                    "google_cse": google_ready,
+                    "reddit_oauth": reddit_ready,
+                    "bing": bool((os.getenv("BING_SEARCH_API_KEY") or "").strip()),
+                    "classifieds_live_flag": os.getenv("CLASSIFIEDS_LIVE", "false"),
+                    "auctions_live_flag": os.getenv("AUCTIONS_LIVE", "false"),
+                },
+                "note": (
+                    "CSE/Reddit keys belong on the collector host (.env / CI), "
+                    "not on Vercel. Missing Reddit keys → recorded sample."
+                ),
+            },
+            indent=2,
+        )
+    )
     return 0
 
 

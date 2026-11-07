@@ -100,9 +100,15 @@ Equivalent with fixtures (full post text, skips keyword search loop):
 fhuk-collector run --fixtures ../../fixtures --write
 ```
 
-### Reddit / UK forums smoke
+### Google CSE / Reddit live (collector host — not Vercel)
+
+CSE and Reddit secrets go in repo-root `.env` (or CI), **not** the Vercel project.  
+`fhuk-collector providers` reports `live_readiness.google_cse` / `reddit_oauth`.
 
 ```bash
+# Live Google (needs GOOGLE_CSE_API_KEY + GOOGLE_CSE_CX)
+fhuk-collector run --provider google --limit-queries 5 --write
+
 # Offline — no Reddit API keys (uses samples/search/reddit_gm.json)
 fhuk-collector run --provider reddit --limit-queries 8
 

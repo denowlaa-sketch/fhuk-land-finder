@@ -36,6 +36,14 @@ def test_auto_falls_back_to_recorded(monkeypatch):
     assert c.name == "recorded"
 
 
+def test_auto_ignores_whitespace_only_cse_keys(monkeypatch):
+    monkeypatch.setenv("GOOGLE_CSE_API_KEY", "   ")
+    monkeypatch.setenv("GOOGLE_CSE_CX", "\t")
+    monkeypatch.delenv("BING_SEARCH_API_KEY", raising=False)
+    c = resolve_connector("auto", recorded_path=SAMPLE)
+    assert c.name == "recorded"
+
+
 def test_pipeline_recorded_dry_run():
     c = RecordedSearchConnector(SAMPLE)
     summary = run_pipeline(

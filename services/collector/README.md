@@ -80,7 +80,21 @@ fhuk-collector run --provider google --limit-queries 5 --write
 fhuk-collector run --provider bing --limit-queries 5 --write
 ```
 
-## Reddit env
+## Google CSE env (collector host — not Vercel)
+
+```bash
+GOOGLE_CSE_API_KEY=...   # Cloud Console API key with Custom Search JSON API
+GOOGLE_CSE_CX=...        # Programmable Search engine ID
+```
+
+1. Enable **Custom Search JSON API** and create an API key.
+2. Create a [Programmable Search Engine](https://programmablesearchengine.google.com/) (entire web is fine; classifieds/auctions add `site:` in-query).
+3. Copy the search engine ID into `GOOGLE_CSE_CX`.
+4. Smoke: `fhuk-collector run --provider google --limit-queries 3` then `--write` with `DATABASE_URL` to fill Discovery.
+
+`SEARCH_PROVIDER=auto` selects Google when both vars are set. `fhuk-collector providers` prints `live_readiness.google_cse`.
+
+## Reddit env (collector host — not Vercel)
 
 ```bash
 REDDIT_CLIENT_ID=...
@@ -90,7 +104,7 @@ REDDIT_SUBREDDITS=SelfBuild,HousingUK,manchester,UKProperty,AskUK
 REDDIT_ALLOW_PUBLIC_JSON=false
 ```
 
-Create a Reddit “script” or “web” app at https://www.reddit.com/prefs/apps and use client credentials grant.
+Create a Reddit “script” or “web” app at https://www.reddit.com/prefs/apps and use client credentials grant. Without id+secret, Reddit **silently** replays `samples/search/reddit_gm.json`. Check `fhuk-collector providers` → `live_readiness.reddit_oauth`.
 
 ## Facebook paste (no scrape)
 

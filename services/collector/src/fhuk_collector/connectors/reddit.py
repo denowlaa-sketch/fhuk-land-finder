@@ -51,12 +51,22 @@ class RedditSearchConnector:
         recorded_path: Path | None = None,
         allow_public_json: bool | None = None,
     ) -> None:
-        self.client_id = client_id or os.getenv("REDDIT_CLIENT_ID", "")
-        self.client_secret = client_secret or os.getenv("REDDIT_CLIENT_SECRET", "")
-        self.user_agent = user_agent or os.getenv(
-            "REDDIT_USER_AGENT",
-            "fhuk-land-finder/0.1 (Greater Manchester land sourcing; contact: local-dev)",
-        )
+        self.client_id = (
+            client_id if client_id is not None else os.getenv("REDDIT_CLIENT_ID", "")
+        ).strip()
+        self.client_secret = (
+            client_secret
+            if client_secret is not None
+            else os.getenv("REDDIT_CLIENT_SECRET", "")
+        ).strip()
+        self.user_agent = (
+            user_agent
+            if user_agent is not None
+            else os.getenv(
+                "REDDIT_USER_AGENT",
+                "fhuk-land-finder/0.1 (Greater Manchester land sourcing; contact: local-dev)",
+            )
+        ).strip()
         env_subs = os.getenv("REDDIT_SUBREDDITS", "")
         if subreddits is not None:
             self.subreddits = subreddits
