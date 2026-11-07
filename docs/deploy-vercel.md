@@ -97,6 +97,15 @@ In Vercel → Project → **Settings → Environment Variables**, add:
 | `NEXT_PUBLIC_APP_NAME` | Optional | Any | Defaults via `.env.example`; branding only. |
 | `PGSSL` | Optional | Any | Set `require` to force TLS if the URL host is non-standard. |
 | `PG_POOL_MAX` | Optional | Any | Defaults to `1` on Vercel; raise only for long-lived Node hosts. |
+| Facebook / Twilio / notify (see root `.env.example`) | Optional | Production | Instant Form + consent-gated dials (#12) — not CSE/Reddit. |
+
+**Do not set on Vercel** (collector-only; unused by `apps/web`):
+
+- `GOOGLE_CSE_API_KEY`, `GOOGLE_CSE_CX`
+- `REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET`, `REDDIT_USER_AGENT` (+ optional `REDDIT_SUBREDDITS` / `REDDIT_ALLOW_PUBLIC_JSON`)
+- `BING_SEARCH_API_KEY`, `SEARCH_PROVIDER`, `CLASSIFIEDS_LIVE`, `AUCTIONS_LIVE`
+
+Paste those into the **collector host** (repo-root `.env` or CI secrets). Live Discovery leaves fixtures after `fhuk-collector run --provider google|reddit|auto --write` against the same `DATABASE_URL`.
 
 Never commit real values. Locally: `cp .env.example .env` at the repo root (or `apps/web/.env.local`).
 

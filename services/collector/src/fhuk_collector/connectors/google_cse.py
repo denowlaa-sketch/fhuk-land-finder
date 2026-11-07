@@ -25,11 +25,12 @@ class GoogleCustomSearchConnector:
         api_key: str | None = None,
         cx: str | None = None,
     ) -> None:
-        self.api_key = api_key or os.getenv("GOOGLE_CSE_API_KEY", "")
-        self.cx = cx or os.getenv("GOOGLE_CSE_CX", "")
+        self.api_key = (api_key if api_key is not None else os.getenv("GOOGLE_CSE_API_KEY", "")).strip()
+        self.cx = (cx if cx is not None else os.getenv("GOOGLE_CSE_CX", "")).strip()
         if not self.api_key or not self.cx:
             raise RuntimeError(
-                "Google CSE requires GOOGLE_CSE_API_KEY and GOOGLE_CSE_CX"
+                "Google CSE requires GOOGLE_CSE_API_KEY and GOOGLE_CSE_CX "
+                "(set both on the collector host — not used by the Vercel web app)"
             )
 
     def search(self, query: str, *, num: int = 5) -> list[SearchHit]:

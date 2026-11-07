@@ -78,9 +78,11 @@ def resolve_connector(
     recorded = recorded_path or (default_recorded_dir() / "google_cse_gm.json")
 
     if chosen == "auto":
-        if os.getenv("GOOGLE_CSE_API_KEY") and os.getenv("GOOGLE_CSE_CX"):
+        google_key = (os.getenv("GOOGLE_CSE_API_KEY") or "").strip()
+        google_cx = (os.getenv("GOOGLE_CSE_CX") or "").strip()
+        if google_key and google_cx:
             return GoogleCustomSearchConnector()
-        if os.getenv("BING_SEARCH_API_KEY"):
+        if (os.getenv("BING_SEARCH_API_KEY") or "").strip():
             return BingSearchConnector()
         return RecordedSearchConnector(recorded)
 

@@ -108,8 +108,8 @@ class ClassifiedsSearchConnector:
                 "yes",
             }
         self.live = bool(live)
-        self.api_key = os.getenv("GOOGLE_CSE_API_KEY", "")
-        self.cx = os.getenv("GOOGLE_CSE_CX", "")
+        self.api_key = (os.getenv("GOOGLE_CSE_API_KEY") or "").strip()
+        self.cx = (os.getenv("GOOGLE_CSE_CX") or "").strip()
         self._payload = json.loads(self.recorded_path.read_text(encoding="utf-8"))
 
     def _listing_to_hit(self, item: dict, query: str) -> SearchHit | None:
