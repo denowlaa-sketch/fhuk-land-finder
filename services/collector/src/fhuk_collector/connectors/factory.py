@@ -41,12 +41,12 @@ def available_providers() -> dict[str, str]:
         "bing": "Needs BING_SEARCH_API_KEY",
         "reddit": "OAuth via REDDIT_CLIENT_ID/SECRET (+ USER_AGENT); else recorded sample",
         "forums": "Light UK property/self-build forum recorded samples (offline)",
-        "classifieds": "Gumtree+Preloved+Freeads recorded GM ads; optional CSE site: live",
+        "classifieds": "Gumtree+Preloved+Freeads recorded UK ads; optional CSE site: live",
         "gumtree": "Gumtree-only classifieds (recorded / optional CSE site:)",
         "preloved": "Preloved-only classifieds (recorded / optional CSE site:)",
         "freeads": "Freeads-only classifieds (recorded / optional CSE site:)",
         "auctions": (
-            "UK auction catalogues + Plotfinder/PlotBrowser recorded GM lots; "
+            "UK auction catalogues + Plotfinder/PlotBrowser recorded lots; "
             "optional CSE site: live"
         ),
         "auctionhouse": "Auction House-only (recorded / optional CSE site:)",

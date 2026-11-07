@@ -22,28 +22,52 @@ VALID_OWN = {"confirmed", "likely", "possible", "unknown"}
 VALID_AI = {"Strong", "Investigate", "Reject"}
 
 
-_GM_TOWNS = (
-    "manchester",
-    "salford",
-    "bolton",
-    "bury",
-    "oldham",
-    "rochdale",
-    "stockport",
-    "tameside",
-    "trafford",
-    "wigan",
-    "sale",
-    "altrincham",
-    "leigh",
-)
+def _coverage_towns() -> tuple[str, ...]:
+    try:
+        from .keywords import load_coverage_towns
+
+        towns = load_coverage_towns()
+        if towns:
+            # Longer tokens first so "st helens" / "sutton coldfield" win over short substrings.
+            return tuple(sorted(towns, key=len, reverse=True))
+    except Exception:
+        pass
+    return (
+        "manchester",
+        "salford",
+        "bolton",
+        "bury",
+        "oldham",
+        "rochdale",
+        "stockport",
+        "tameside",
+        "trafford",
+        "wigan",
+        "sale",
+        "altrincham",
+        "leigh",
+        "leeds",
+        "bradford",
+        "liverpool",
+        "birmingham",
+        "preston",
+        "chester",
+        "warrington",
+    )
+
+
+def _title_case_town(token: str) -> str:
+    return " ".join(p.capitalize() for p in token.split())
 
 
 def _heuristic_location(hit: SearchHit) -> str:
     raw = hit.raw_text or hit.snippet or ""
     pc = re.search(r"\b([A-Z]{1,2}\d{1,2}[A-Z]?\s*\d[A-Z]{2})\b", raw, re.I)
     lower = raw.lower()
-    town = next((t.title() for t in _GM_TOWNS if t in lower), None)
+    town = next(
+        (_title_case_town(t) for t in _coverage_towns() if t in lower),
+        None,
+    )
     if town and pc:
         return f"{town}, {pc.group(1).upper()}"
     if town:

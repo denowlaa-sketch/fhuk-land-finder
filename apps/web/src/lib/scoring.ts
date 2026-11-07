@@ -1,3 +1,4 @@
+import { GEOGRAPHY_LABEL, locationInCoverage } from "./geography";
 import type {
   AiAssessment,
   LeadCategory,
@@ -197,23 +198,11 @@ export function analyseLead(lead: AnalyseLeadInput): AnalysisResult {
     });
   }
 
-  const loc = (lead.location ?? "").toLowerCase();
-  if (
-    loc.includes("manchester") ||
-    loc.includes("bolton") ||
-    loc.includes("oldham") ||
-    loc.includes("stockport") ||
-    loc.includes("wigan") ||
-    loc.includes("salford") ||
-    loc.includes("rochdale") ||
-    loc.includes("bury") ||
-    loc.includes("tameside") ||
-    loc.includes("trafford")
-  ) {
+  if (locationInCoverage(lead.location)) {
     score += 6;
     reasons.push({
-      code: "gm_location",
-      detail: "Greater Manchester pilot geography",
+      code: "coverage_location",
+      detail: GEOGRAPHY_LABEL,
       delta: 6,
     });
   }

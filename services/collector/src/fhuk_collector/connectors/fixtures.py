@@ -23,9 +23,25 @@ class FixtureSearchConnector:
             title = str(data.get("title", path.stem)).lower()
             # Match when the town appears in the keyword query, else keep all
             # when query is empty / catch-all smoke.
-            if town and town not in q and "greater manchester" not in q:
+            region_tokens = (
+                "greater manchester",
+                "west yorkshire",
+                "merseyside",
+                "lancashire",
+                "cheshire",
+                "west midlands",
+            )
+            if town and town not in q and not any(r in q for r in region_tokens):
                 # Still allow phrase-only queries to surface all fixtures once.
-                if not any(t in q for t in ("bolton", "oldham", "stockport", "wigan", "sale", "trafford")):
+                fixture_towns = (
+                    "bolton",
+                    "oldham",
+                    "stockport",
+                    "wigan",
+                    "sale",
+                    "trafford",
+                )
+                if not any(t in q for t in fixture_towns):
                     if hits:
                         continue
             hits.append(

@@ -41,7 +41,7 @@ class RecordedSearchConnector:
         matched = [it for score, it in scored if score > 0]
         remainder = [it for score, it in scored if score <= 0]
         # Prefer query matches, then backfill so offline smoke still surfaces
-        # the full Greater Manchester sample set.
+        # the full recorded sample set (historically GM-labelled).
         chosen = (matched + remainder)[:num]
 
         hits: list[SearchHit] = []

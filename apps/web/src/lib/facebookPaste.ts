@@ -1,3 +1,4 @@
+import { COVERAGE_TOWNS, titleCaseTown } from "./geography";
 import { analyseLead } from "./scoring";
 import type {
   AiAssessment,
@@ -23,22 +24,6 @@ export interface PasteAnalysis {
   original_post_url: string | null;
   raw_excerpt: string;
 }
-
-const GM_TOWNS = [
-  "manchester",
-  "salford",
-  "bolton",
-  "bury",
-  "oldham",
-  "rochdale",
-  "stockport",
-  "tameside",
-  "trafford",
-  "wigan",
-  "sale",
-  "altrincham",
-  "leigh",
-];
 
 export function isFacebookUrl(url: string): boolean {
   try {
@@ -66,11 +51,11 @@ function voluntaryContact(raw: string): string | null {
 function heuristicLocation(raw: string): string {
   const pc = raw.match(/\b([A-Z]{1,2}\d{1,2}[A-Z]?\s*\d[A-Z]{2})\b/i);
   const lower = raw.toLowerCase();
-  const town = GM_TOWNS.find((t) => lower.includes(t));
+  const town = COVERAGE_TOWNS.find((t) => lower.includes(t));
   if (town && pc) {
-    return `${town[0]!.toUpperCase()}${town.slice(1)}, ${pc[1]!.toUpperCase()}`;
+    return `${titleCaseTown(town)}, ${pc[1]!.toUpperCase()}`;
   }
-  if (town) return `${town[0]!.toUpperCase()}${town.slice(1)}`;
+  if (town) return titleCaseTown(town);
   if (pc) return pc[1]!.toUpperCase();
   return "Unknown UK";
 }

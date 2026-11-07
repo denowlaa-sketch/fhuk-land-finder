@@ -1,6 +1,16 @@
 {
   "region": "Greater Manchester",
   "version": 1,
+  "priority_towns": [
+    "Manchester",
+    "Bolton",
+    "Oldham",
+    "Stockport",
+    "Wigan",
+    "Sale",
+    "Rochdale",
+    "Salford"
+  ],
   "towns": [
     "Manchester",
     "Salford",
@@ -70,5 +80,5 @@
     "garage plot for sale"
   ],
   "query_template": "{phrase} {town}",
-  "notes": "Phase 0 seed for Greater Manchester pilot. Combine each phrase × town for stub/search queries. No unofficial Facebook scrapers."
+  "notes": "Greater Manchester seed (original pilot). Combine each phrase × town for stub/search queries. Part of the multi-region UK keyword library. No unofficial Facebook scrapers."
 }
