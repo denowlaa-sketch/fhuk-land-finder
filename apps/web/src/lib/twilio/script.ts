@@ -1,6 +1,6 @@
 /**
  * Land seller qualify script — keypad answers for live Twilio + sandbox UI.
- * Adapted from solar residential script to ownership / plot / planning / price.
+ * Plot / location / motivation / timeline (not solar roof/bill/panels).
  */
 
 export type ScriptStepId =
@@ -8,8 +8,9 @@ export type ScriptStepId =
   | "interested"
   | "owner"
   | "plot_ok"
-  | "planning"
-  | "price_ok"
+  | "location_ok"
+  | "motivation"
+  | "timeline"
   | "follow_up"
   | "done";
 
@@ -24,7 +25,7 @@ export const LAND_CALL_SCRIPT: ScriptStep[] = [
   {
     id: "intro",
     prompt:
-      "Hello — this is Flipping Homes UK calling about the land enquiry you submitted. This call is recorded. Press 1 to continue, or hang up if you prefer not to speak now.",
+      "Hello — this is Flipping Homes UK calling about the land enquiry you submitted on our ad. This call is recorded. Press 1 to continue, or 2 if you prefer a callback later.",
     options: [
       { digit: "1", label: "Continue", value: "continue" },
       { digit: "2", label: "Callback later", value: "callback" },
@@ -60,23 +61,33 @@ export const LAND_CALL_SCRIPT: ScriptStep[] = [
     ],
   },
   {
-    id: "planning",
+    id: "location_ok",
     prompt:
-      "What is the planning position? Press 1 for none or pre-app only, 2 for outline or full permission, 3 if unsure.",
+      "Can you confirm the location of the land matches what you entered on the form? Press 1 for yes, 2 for no, 3 if you need to correct it later.",
     options: [
-      { digit: "1", label: "None / pre-app", value: "none_or_pre" },
-      { digit: "2", label: "Outline / full", value: "permission" },
-      { digit: "3", label: "Unsure", value: "unsure" },
+      { digit: "1", label: "Yes — location correct", value: "yes" },
+      { digit: "2", label: "No — wrong location", value: "no" },
+      { digit: "3", label: "Needs correction", value: "correct_later" },
     ],
   },
   {
-    id: "price_ok",
+    id: "motivation",
     prompt:
-      "Are your price expectations flexible enough for a cash or option conversation? Press 1 for yes, 2 if you need top market price only, 3 if unsure.",
+      "What best describes your motivation? Press 1 for cash sale soon, 2 for option or joint venture, 3 for exploring only.",
     options: [
-      { digit: "1", label: "Flexible / open", value: "yes" },
-      { digit: "2", label: "Top price only", value: "no" },
-      { digit: "3", label: "Unsure", value: "unsure" },
+      { digit: "1", label: "Cash sale soon", value: "cash_sale" },
+      { digit: "2", label: "Option / JV", value: "option_jv" },
+      { digit: "3", label: "Exploring", value: "exploring" },
+    ],
+  },
+  {
+    id: "timeline",
+    prompt:
+      "What is your timeline? Press 1 for ASAP or within 3 months, 2 for within 6 months, 3 for exploring with no fixed date.",
+    options: [
+      { digit: "1", label: "ASAP / ≤3 months", value: "hot" },
+      { digit: "2", label: "Within 6 months", value: "warm" },
+      { digit: "3", label: "Exploring", value: "exploring" },
     ],
   },
   {
@@ -105,8 +116,8 @@ export type CallOutcomeValue =
 
 /**
  * Sandbox / live qualify rules for land:
- * Must: still interested, owner (yes), plot OK, follow-up OK.
- * Price "top only" or owner no → UNQUALIFIED.
+ * Must: still interested, owner yes, plot OK, location not wrong, follow-up OK.
+ * Exploring-only motivation still qualifies if other gates pass (ops can filter).
  */
 export function evaluateCallOutcome(answers: CallAnswers): CallOutcomeValue {
   if (answers.intro === "callback") return "CALLBACK";
@@ -115,7 +126,7 @@ export function evaluateCallOutcome(answers: CallAnswers): CallOutcomeValue {
   if (answers.owner !== "yes") return "UNQUALIFIED";
   if (answers.plot_ok === "no") return "UNQUALIFIED";
   if (answers.plot_ok !== "yes") return "UNQUALIFIED";
-  if (answers.price_ok === "no") return "UNQUALIFIED";
+  if (answers.location_ok === "no") return "UNQUALIFIED";
   if (answers.follow_up !== "yes") return "UNQUALIFIED";
   return "QUALIFIED";
 }

@@ -62,20 +62,20 @@ export default function SettingsPage() {
 
       <section className="mb-6 max-w-2xl rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
         <h2 className="mb-2 font-display text-lg font-semibold text-slate-900">
-          Facebook Instant Form + calls
+          Ad Leads / Calls (Meta + TikTok)
         </h2>
         <p className="text-sm text-slate-600">
           PECR-safe call queue lives on{" "}
-          <Link href="/facebook">/facebook</Link>. Live Twilio stays off until{" "}
+          <Link href="/ad-leads">/ad-leads</Link>. Live Twilio stays off until{" "}
           <code>TWILIO_LIVE_DIALS=true</code>. Owner alert on QUALIFIED uses{" "}
           <code>NOTIFY_EMAIL_TO</code> or <code>OWNER_NOTIFY_EMAIL</code> — never
-          the seller.
+          the seller. Never dial without Instant Form consent.
         </p>
       </section>
 
       <p className="space-x-4">
-        <Link href="/facebook" className="text-sm">
-          Instant Form call queue →
+        <Link href="/ad-leads" className="text-sm">
+          Ad Leads / Calls inbox →
         </Link>
         <Link href="/paste" className="text-sm">
           Facebook URL paste →

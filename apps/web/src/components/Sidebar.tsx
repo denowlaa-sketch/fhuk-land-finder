@@ -15,7 +15,7 @@ import { usePathname } from "next/navigation";
 
 const NAV = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/facebook", label: "Facebook", icon: Megaphone },
+  { href: "/ad-leads", label: "Ad Leads / Calls", icon: Megaphone },
   { href: "/leads", label: "Leads", icon: ClipboardList },
   { href: "/discovery", label: "Discovery", icon: Compass },
   { href: "/companies", label: "Companies", icon: Building2, stub: true },

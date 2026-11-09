@@ -32,6 +32,12 @@ export async function POST(request: Request) {
     typeof record.facebook_lead_id === "string" && record.facebook_lead_id.trim()
       ? record.facebook_lead_id.trim()
       : `sim_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  const channelHint =
+    typeof record.channel === "string"
+      ? record.channel
+      : typeof record.platform === "string"
+        ? record.platform
+        : null;
 
   // Accept either flat form fields or { fields: { ... } } / field_data array.
   let fieldData: Record<string, string> | Array<{ name?: string; values?: string[] }>;
@@ -55,6 +61,8 @@ export async function POST(request: Request) {
       "fields",
       "form_id",
       "ad_id",
+      "channel",
+      "platform",
     ]);
     fieldData = Object.fromEntries(
       Object.entries(record)
@@ -71,6 +79,7 @@ export async function POST(request: Request) {
         typeof record.form_id === "string" ? record.form_id : "simulate_form",
       adId: typeof record.ad_id === "string" ? record.ad_id : null,
       createdTime: new Date().toISOString(),
+      channelHint,
     });
     return NextResponse.json({
       ok: true,
