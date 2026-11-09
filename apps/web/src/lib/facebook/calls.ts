@@ -1,3 +1,8 @@
+import {
+  AD_CALL_SOURCES_SQL,
+  isAdCallSource,
+  sourceKindToAdChannel,
+} from "@/lib/ad-leads/channels";
 import { getPool } from "@/lib/db";
 import {
   leadBodyText,
@@ -115,6 +120,10 @@ function mapLead(row: Record<string, unknown>): Lead {
       ? new Date(String(row.consent_at)).toISOString()
       : null,
     facebook_lead_id: (row.facebook_lead_id as string) ?? null,
+    tiktok_lead_id: (row.tiktok_lead_id as string) ?? null,
+    ad_channel:
+      (row.ad_channel as Lead["ad_channel"]) ??
+      sourceKindToAdChannel(row.source_kind as string),
     form_payload:
       typeof row.form_payload === "object" && row.form_payload !== null
         ? (row.form_payload as Record<string, unknown>)
@@ -131,8 +140,10 @@ async function getLeadRow(leadId: string): Promise<Lead | null> {
 
 /** PECR hard gate before any sandbox or live dial. */
 export function assertCanStartCall(lead: Lead): void {
-  if (lead.source_kind !== "FACEBOOK") {
-    throw new Error("Only Facebook Instant Form leads may enter the call queue");
+  if (!isAdCallSource(lead.source_kind)) {
+    throw new Error(
+      "Only Meta (Facebook/Instagram) or TikTok Instant Form leads may enter the call queue",
+    );
   }
   if (!lead.consent_to_call) {
     throw new Error("PECR: recorded call consent is required before dialling");
@@ -146,12 +157,25 @@ export function assertCanStartCall(lead: Lead): void {
 }
 
 /**
- * Queue = FACEBOOK Instant Form + consent + phone + NEW|CONTACTED.
+ * Queue = FACEBOOK|INSTAGRAM|TIKTOK Instant Form + consent + phone + NEW|CONTACTED.
  * NO_ANSWER / CALLBACK leave CONTACTED so leads reappear (recall).
+ * Discovery / scraped / URL-paste numbers are never included.
  */
-export async function getCallQueue(): Promise<CallQueueItem[]> {
+export async function getCallQueue(opts?: {
+  channel?: "facebook" | "instagram" | "tiktok" | "all";
+}): Promise<CallQueueItem[]> {
   const db = getPool();
   if (!db) return [];
+
+  const channel = opts?.channel ?? "all";
+  const channelClause =
+    channel === "all"
+      ? ""
+      : channel === "facebook"
+        ? `AND (l.ad_channel = 'facebook' OR (l.ad_channel IS NULL AND l.source_kind = 'FACEBOOK'::lead_source))`
+        : channel === "instagram"
+          ? `AND (l.ad_channel = 'instagram' OR l.source_kind = 'INSTAGRAM'::lead_source)`
+          : `AND (l.ad_channel = 'tiktok' OR l.source_kind = 'TIKTOK'::lead_source)`;
 
   const { rows } = await db.query(
     `SELECT l.*,
@@ -165,10 +189,11 @@ export async function getCallQueue(): Promise<CallQueueItem[]> {
          ) ca
        ) AS latest_attempt_json
      FROM leads l
-     WHERE l.source_kind = 'FACEBOOK'::lead_source
+     WHERE l.source_kind IN ${AD_CALL_SOURCES_SQL}
        AND l.consent_to_call = TRUE
        AND l.status IN ('NEW'::pipeline_status, 'CONTACTED'::pipeline_status)
        AND COALESCE(l.contact, '') <> ''
+       ${channelClause}
      ORDER BY l.date_discovered DESC`,
   );
 
@@ -314,7 +339,7 @@ export async function notifyOwnerOfQualifiedLead(opts: {
     ai_assessment: "Strong",
     source: opts.lead.source,
     original_post_url: opts.lead.original_post_url,
-    ai_rationale: `Call-qualified Facebook Instant Form lead (${opts.lead.ref})`,
+    ai_rationale: `Call-qualified ad Instant Form lead (${opts.lead.ref}; ${opts.lead.ad_channel || opts.lead.source_kind})`,
   };
 
   const recipients = notifyRecipients();

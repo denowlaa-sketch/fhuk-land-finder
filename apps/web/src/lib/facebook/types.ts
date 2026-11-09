@@ -27,6 +27,8 @@ export interface FacebookLandFormAnswers {
   planning: PlanningSignal;
   priceExpectation: string | null;
   timeline: LandTimeline;
+  /** Why they may sell / option — land ICP (not solar bill/roof). */
+  motivation: string | null;
   ownershipInterest: boolean | null;
   consentToCall: boolean;
   /** Raw Instant Form field map for audit. */

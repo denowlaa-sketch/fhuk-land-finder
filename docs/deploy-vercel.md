@@ -50,13 +50,14 @@ export DATABASE_URL='postgresql://USER:PASSWORD@HOST/DB?sslmode=require'
 psql "$DATABASE_URL" -f db/migrations/001_leads.sql
 psql "$DATABASE_URL" -f db/migrations/002_crm_parity.sql
 psql "$DATABASE_URL" -f db/migrations/003_facebook_calls.sql
+psql "$DATABASE_URL" -f db/migrations/004_ad_leads_channels.sql
 ```
 
 ### Supabase
 
 1. Create a project at [supabase.com](https://supabase.com).
 2. **Project Settings → Database** → copy the URI (prefer the pooler / transaction mode URL for the app).
-3. Append `?sslmode=require` if missing, then run `001_leads.sql`, `002_crm_parity.sql`, and `003_facebook_calls.sql`.
+3. Append `?sslmode=require` if missing, then run `001` → `004` migrations.
 
 ### Vercel Postgres
 
@@ -68,9 +69,10 @@ psql "$DATABASE_URL" -f db/migrations/003_facebook_calls.sql
 psql "$POSTGRES_URL_NON_POOLING" -f db/migrations/001_leads.sql
 psql "$POSTGRES_URL_NON_POOLING" -f db/migrations/002_crm_parity.sql
 psql "$POSTGRES_URL_NON_POOLING" -f db/migrations/003_facebook_calls.sql
+psql "$POSTGRES_URL_NON_POOLING" -f db/migrations/004_ad_leads_channels.sql
 ```
 
-`001_leads.sql` / `002_crm_parity.sql` / `003_facebook_calls.sql` are **not fully idempotent** (enum `CREATE TYPE` will error on re-run). Run each once per empty database (001 → 002 → 003). To re-apply after a wipe, drop the database/schema first.
+`001`–`003` are **not fully idempotent** (enum `CREATE TYPE` will error on re-run). `004` mostly uses `IF NOT EXISTS` / `ADD VALUE IF NOT EXISTS`. Run each once per empty database (001 → 002 → 003 → 004). To re-apply after a wipe, drop the database/schema first.
 
 ## 2. Import the project on Vercel
 
@@ -97,7 +99,7 @@ In Vercel → Project → **Settings → Environment Variables**, add:
 | `NEXT_PUBLIC_APP_NAME` | Optional | Any | Defaults via `.env.example`; branding only. |
 | `PGSSL` | Optional | Any | Set `require` to force TLS if the URL host is non-standard. |
 | `PG_POOL_MAX` | Optional | Any | Defaults to `1` on Vercel; raise only for long-lived Node hosts. |
-| Facebook / Twilio / notify (see root `.env.example`) | Optional | Production | Instant Form + consent-gated dials (#12) — not CSE/Reddit. |
+| Meta / TikTok / Twilio / notify (see root `.env.example`) | Optional | Production | Ad Leads Instant Form + consent-gated dials — not CSE/Reddit. |
 
 **Do not set on Vercel** (collector-only; unused by `apps/web`):
 
@@ -125,7 +127,7 @@ If you use Vercel Postgres storage integration, either:
 
 ## 4. Deploy checklist
 
-- [ ] Migrations applied once against empty DB (`001` → `002` → `003_facebook_calls.sql`)
+- [ ] Migrations applied once against empty DB (`001` → `002` → `003` → `004_ad_leads_channels.sql`)
 - [ ] Vercel Root Directory = `apps/web`
 - [ ] `DATABASE_URL` set (pooled + SSL)
 - [ ] Optional `OPENAI_API_KEY` for paste analysis

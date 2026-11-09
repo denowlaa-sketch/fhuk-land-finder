@@ -1,3 +1,8 @@
+import {
+  adChannelToSourceKind,
+  detectMetaAdChannel,
+  type AdChannel,
+} from "@/lib/ad-leads/channels";
 import { getPool } from "@/lib/db";
 import { assessmentFromScore } from "@/lib/scoring";
 import type { Lead } from "@/lib/types";
@@ -60,6 +65,8 @@ function mapLeadRow(row: Record<string, unknown>): Lead {
       ? new Date(String(row.consent_at)).toISOString()
       : null,
     facebook_lead_id: (row.facebook_lead_id as string) ?? null,
+    tiktok_lead_id: (row.tiktok_lead_id as string) ?? null,
+    ad_channel: (row.ad_channel as Lead["ad_channel"]) ?? null,
     form_payload:
       typeof row.form_payload === "object" && row.form_payload !== null
         ? (row.form_payload as Record<string, unknown>)
@@ -75,6 +82,8 @@ export interface IngestFacebookLeadInput {
   formId?: string | null;
   adId?: string | null;
   createdTime?: string | null;
+  /** facebook | instagram — FB+IG share leadgen webhook. */
+  channelHint?: string | null;
 }
 
 export interface IngestFacebookLeadResult {
@@ -98,9 +107,20 @@ export async function ingestFacebookLead(
   }
 
   const answers = parseFacebookLandForm(input.fieldData);
+  const channel: AdChannel = detectMetaAdChannel({
+    fieldData: input.fieldData,
+    hint: input.channelHint,
+  });
+  const sourceKind = adChannelToSourceKind(channel);
+  const sourceLabel =
+    channel === "instagram"
+      ? "instagram_instant_form"
+      : "facebook_instant_form";
   const qualify = qualifyFacebookLead(answers);
   const assessment = assessmentFromScore(qualify.score);
-  const location = answers.location?.trim() || "Location unknown (Facebook form)";
+  const location =
+    answers.location?.trim() ||
+    `Location unknown (${channel === "instagram" ? "Instagram" : "Facebook"} form)`;
   const contact =
     [answers.phone, answers.email].filter(Boolean).join(" / ") || null;
   const askingPrice = parsePrice(answers.priceExpectation);
@@ -112,8 +132,15 @@ export async function ingestFacebookLead(
       : answers.ownershipInterest === false
         ? "unknown"
         : "possible";
+  const motivationParts = [
+    answers.motivation,
+    answers.timeline !== "unknown" ? `Timeline: ${answers.timeline}` : null,
+  ].filter(Boolean);
+  const sellerMotivation =
+    motivationParts.length > 0 ? motivationParts.join(" · ") : null;
   const consentAt = answers.consentToCall ? new Date().toISOString() : null;
   const formPayload = {
+    channel,
     facebook_lead_id: input.facebookLeadId,
     form_id: input.formId ?? null,
     ad_id: input.adId ?? null,
@@ -129,6 +156,7 @@ export async function ingestFacebookLead(
       planning: answers.planning,
       priceExpectation: answers.priceExpectation,
       timeline: answers.timeline,
+      motivation: answers.motivation,
       ownershipInterest: answers.ownershipInterest,
       consentToCall: answers.consentToCall,
     },
@@ -145,8 +173,9 @@ export async function ingestFacebookLead(
          land_size = COALESCE($3, land_size),
          asking_price = COALESCE($4, asking_price),
          planning_status = $5::planning_status,
-         source = 'facebook_instant_form',
-         source_kind = 'FACEBOOK'::lead_source,
+         source = $22,
+         source_kind = $23::lead_source,
+         ad_channel = $24,
          landowner_name = COALESCE($6, landowner_name),
          contact = COALESCE($7, contact),
          ownership_confidence = $8::ownership_confidence,
@@ -175,11 +204,9 @@ export async function ingestFacebookLead(
         answers.fullName,
         contact,
         ownership,
-        answers.timeline !== "unknown"
-          ? `Timeline: ${answers.timeline}`
-          : null,
+        sellerMotivation,
         assessment,
-        "Facebook Instant Form score (no dial)",
+        `${channel === "instagram" ? "Instagram" : "Facebook"} Instant Form score (no dial)`,
         qualify.score,
         qualify.category,
         qualify.qualification_label,
@@ -190,6 +217,9 @@ export async function ingestFacebookLead(
         consentAt,
         JSON.stringify(formPayload),
         JSON.stringify(answers.raw).slice(0, 4000),
+        sourceLabel,
+        sourceKind,
+        channel,
       ],
     );
     return {
@@ -205,14 +235,14 @@ export async function ingestFacebookLead(
   const { rows } = await db.query(
     `INSERT INTO leads (
        ref, location, opportunity_type, land_size, asking_price,
-       planning_status, source, source_kind, landowner_name, contact,
+       planning_status, source, source_kind, ad_channel, landowner_name, contact,
        ownership_confidence, seller_motivation, ai_assessment, ai_rationale,
        score, category, qualification_label, reasons, unknowns,
        pipeline_version, last_analysed_at, status, contact_status,
        consent_to_call, consent_at, facebook_lead_id, form_payload, raw_excerpt
      ) VALUES (
        $1, $2, 'other'::opportunity_type, $3, $4,
-       $5::planning_status, 'facebook_instant_form', 'FACEBOOK'::lead_source, $6, $7,
+       $5::planning_status, $24, $25::lead_source, $26, $6, $7,
        $8::ownership_confidence, $9, $10::ai_assessment, $11,
        $12, $13::lead_category, $14::qualification_label, $15::jsonb, $16::jsonb,
        $17, NOW(), 'NEW'::pipeline_status, $18::contact_status,
@@ -227,9 +257,9 @@ export async function ingestFacebookLead(
       answers.fullName,
       contact,
       ownership,
-      answers.timeline !== "unknown" ? `Timeline: ${answers.timeline}` : null,
+      sellerMotivation,
       assessment,
-      "Facebook Instant Form score (no dial)",
+      `${channel === "instagram" ? "Instagram" : "Facebook"} Instant Form score (no dial)`,
       qualify.score,
       qualify.category,
       qualify.qualification_label,
@@ -242,6 +272,9 @@ export async function ingestFacebookLead(
       input.facebookLeadId,
       JSON.stringify(formPayload),
       JSON.stringify(answers.raw).slice(0, 4000),
+      sourceLabel,
+      sourceKind,
+      channel,
     ],
   );
 

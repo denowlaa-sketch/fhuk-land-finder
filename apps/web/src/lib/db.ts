@@ -119,6 +119,8 @@ function mapLead(row: QueryResultRow): Lead {
       ? new Date(row.consent_at).toISOString()
       : null,
     facebook_lead_id: row.facebook_lead_id ?? null,
+    tiktok_lead_id: row.tiktok_lead_id ?? null,
+    ad_channel: (row.ad_channel as Lead["ad_channel"]) ?? null,
     form_payload:
       typeof row.form_payload === "object" && row.form_payload !== null
         ? (row.form_payload as Record<string, unknown>)

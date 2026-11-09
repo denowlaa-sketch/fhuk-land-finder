@@ -150,6 +150,17 @@ export function qualifyFacebookLead(
     unknowns.push("timeline");
   }
 
+  if (answers.motivation) {
+    score += 5;
+    reasons.push({
+      code: "motivation",
+      detail: `Motivation noted (+5)`,
+      delta: 5,
+    });
+  } else {
+    unknowns.push("seller_motivation");
+  }
+
   score = Math.max(0, Math.min(100, Math.round(score)));
   return {
     score,

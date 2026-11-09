@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 
 type Ctx = { params: Promise<{ id: string }> };
 
-/** Start sandbox call attempt — consent + phone + FACEBOOK required. */
+/** Start sandbox call attempt — consent + phone + FACEBOOK|INSTAGRAM|TIKTOK required. */
 export async function POST(_request: Request, context: Ctx) {
   const { id } = await context.params;
   try {

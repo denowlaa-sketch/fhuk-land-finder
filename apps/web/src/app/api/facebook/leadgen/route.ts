@@ -23,7 +23,10 @@ export async function GET(request: Request) {
   return NextResponse.json({ error: "Verification failed" }, { status: 403 });
 }
 
-/** Leadgen webhook → Graph fetch → ingest (score only; no dial/email). */
+/**
+ * Meta Lead Ads webhook (Facebook + Instagram share leadgen).
+ * Graph fetch → ingest (score only; no dial/email). PECR: dial only with consent.
+ */
 export async function POST(request: Request) {
   const rawBody = await request.text();
   const signature = request.headers.get("x-hub-signature-256");
@@ -37,6 +40,17 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
+
+  // Optional channel hint from query (?channel=instagram) or body.platform.
+  const url = new URL(request.url);
+  const queryChannel = url.searchParams.get("channel");
+  const bodyPlatform =
+    typeof body === "object" &&
+    body !== null &&
+    "platform" in body &&
+    typeof (body as { platform?: unknown }).platform === "string"
+      ? String((body as { platform: string }).platform)
+      : null;
 
   const entries: FacebookLeadgenEntry[] = [];
   if (
@@ -55,10 +69,20 @@ export async function POST(request: Request) {
   }
 
   if (!entries.length) {
-    return NextResponse.json({ ok: true, ingested: 0, note: "No leadgen entries" });
+    return NextResponse.json({
+      ok: true,
+      ingested: 0,
+      note: "No leadgen entries (Meta FB + IG Lead Ads share this webhook)",
+    });
   }
 
-  const results: Array<{ leadgen_id: string; ref?: string; created?: boolean; error?: string }> = [];
+  const results: Array<{
+    leadgen_id: string;
+    ref?: string;
+    created?: boolean;
+    channel?: string;
+    error?: string;
+  }> = [];
   for (const entry of entries) {
     const leadgenId = String(entry.leadgen_id);
     try {
@@ -66,18 +90,28 @@ export async function POST(request: Request) {
       const ingested = await ingestFacebookLead({
         facebookLeadId: graph.id || leadgenId,
         fieldData: graph.field_data ?? [],
-        formId: graph.form_id ? String(graph.form_id) : entry.form_id ? String(entry.form_id) : null,
-        adId: graph.ad_id ? String(graph.ad_id) : entry.ad_id ? String(entry.ad_id) : null,
+        formId: graph.form_id
+          ? String(graph.form_id)
+          : entry.form_id
+            ? String(entry.form_id)
+            : null,
+        adId: graph.ad_id
+          ? String(graph.ad_id)
+          : entry.ad_id
+            ? String(entry.ad_id)
+            : null,
         createdTime: graph.created_time ? String(graph.created_time) : null,
+        channelHint: queryChannel || bodyPlatform,
       });
       results.push({
         leadgen_id: leadgenId,
         ref: ingested.lead.ref,
         created: ingested.created,
+        channel: ingested.lead.ad_channel || undefined,
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      console.error(`Facebook leadgen ingest failed for ${leadgenId}:`, message);
+      console.error(`Meta leadgen ingest failed for ${leadgenId}:`, message);
       results.push({ leadgen_id: leadgenId, error: message });
     }
   }

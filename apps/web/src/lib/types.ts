@@ -85,12 +85,19 @@ export type LeadSourceKind =
   | "CLASSIFIED"
   | "AUCTION"
   | "FACEBOOK_URL"
-  /** Meta Instant Form leadgen (consent-gated call queue). */
+  /** Meta Facebook Instant Form leadgen (consent-gated call queue). */
   | "FACEBOOK"
+  /** Meta Instagram Lead Ads (same leadgen webhook as Facebook). */
+  | "INSTAGRAM"
+  /** TikTok Lead Generation Instant Form. */
+  | "TIKTOK"
   | "FIXTURE"
   | "MANUAL"
   | "AI_DISCOVERY"
   | "OTHER";
+
+/** Paid ad lead channel for inbox filters (mirrors FACEBOOK|INSTAGRAM|TIKTOK). */
+export type AdChannelKind = "facebook" | "instagram" | "tiktok";
 
 export interface ScoreReason {
   code: string;
@@ -134,6 +141,9 @@ export interface Lead {
   consent_to_call?: boolean;
   consent_at?: string | null;
   facebook_lead_id?: string | null;
+  tiktok_lead_id?: string | null;
+  /** facebook | instagram | tiktok when from paid Instant Form / Lead Gen. */
+  ad_channel?: AdChannelKind | null;
   form_payload?: Record<string, unknown>;
 }
 

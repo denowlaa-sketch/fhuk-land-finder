@@ -174,6 +174,14 @@ export function parseFacebookLandForm(
     timeline: parseTimeline(
       pick(raw, ["timeline", "when", "timescale", "urgency"]),
     ),
+    motivation: pick(raw, [
+      "motivation",
+      "seller_motivation",
+      "why_selling",
+      "reason_for_sale",
+      "why_are_you_selling",
+      "reason",
+    ]),
     ownershipInterest: parseYesNo(ownershipRaw),
     // PECR: only true when explicitly yes
     consentToCall: consentParsed === true,
