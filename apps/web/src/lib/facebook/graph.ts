@@ -52,3 +52,65 @@ export async function fetchFacebookLead(
   }
   return body;
 }
+
+export interface PageTokenProbeResult {
+  configured: boolean;
+  valid: boolean | null;
+  /** Graph error code when invalid (e.g. 190 session expired). Never includes token. */
+  errorCode: number | null;
+  errorType: string | null;
+  message: string | null;
+}
+
+/**
+ * Lightweight Graph probe for FACEBOOK_PAGE_ACCESS_TOKEN validity.
+ * Does not invent or return secrets — only ok / Graph error metadata.
+ */
+export async function probeFacebookPageToken(): Promise<PageTokenProbeResult> {
+  const token = facebookPageAccessToken();
+  if (!token) {
+    return {
+      configured: false,
+      valid: false,
+      errorCode: null,
+      errorType: null,
+      message: "FACEBOOK_PAGE_ACCESS_TOKEN is not configured",
+    };
+  }
+
+  const url = new URL("https://graph.facebook.com/v21.0/me");
+  url.searchParams.set("fields", "id");
+  url.searchParams.set("access_token", token);
+
+  try {
+    const res = await fetch(url.toString(), { method: "GET" });
+    const body = (await res.json().catch(() => ({}))) as {
+      id?: string;
+      error?: { code?: number; type?: string; message?: string };
+    };
+    if (res.ok && body.id) {
+      return {
+        configured: true,
+        valid: true,
+        errorCode: null,
+        errorType: null,
+        message: null,
+      };
+    }
+    return {
+      configured: true,
+      valid: false,
+      errorCode: body.error?.code ?? res.status,
+      errorType: body.error?.type ?? null,
+      message: body.error?.message ?? `Graph HTTP ${res.status}`,
+    };
+  } catch (err) {
+    return {
+      configured: true,
+      valid: null,
+      errorCode: null,
+      errorType: null,
+      message: err instanceof Error ? err.message : String(err),
+    };
+  }
+}

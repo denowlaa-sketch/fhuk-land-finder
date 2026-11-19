@@ -59,10 +59,39 @@ export function applyDigit(
     nextAnswers[stepId] = match?.value ?? "unknown";
   }
 
+  // Solar-style early exits: stop keypad when outcome is already known.
   if (stepId === "intro" && nextAnswers.intro === "callback") {
     return { answers: nextAnswers, next: "complete", earlyOutcome: "CALLBACK" };
   }
   if (stepId === "interested" && nextAnswers.interested === "no") {
+    return {
+      answers: nextAnswers,
+      next: "complete",
+      earlyOutcome: "UNQUALIFIED",
+    };
+  }
+  if (stepId === "owner" && nextAnswers.owner === "no") {
+    return {
+      answers: nextAnswers,
+      next: "complete",
+      earlyOutcome: "UNQUALIFIED",
+    };
+  }
+  if (stepId === "plot_ok" && nextAnswers.plot_ok === "no") {
+    return {
+      answers: nextAnswers,
+      next: "complete",
+      earlyOutcome: "UNQUALIFIED",
+    };
+  }
+  if (stepId === "location_ok" && nextAnswers.location_ok === "no") {
+    return {
+      answers: nextAnswers,
+      next: "complete",
+      earlyOutcome: "UNQUALIFIED",
+    };
+  }
+  if (stepId === "follow_up" && nextAnswers.follow_up === "no") {
     return {
       answers: nextAnswers,
       next: "complete",

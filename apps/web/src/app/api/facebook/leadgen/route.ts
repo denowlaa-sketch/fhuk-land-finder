@@ -1,12 +1,19 @@
 import { NextResponse } from "next/server";
-import { facebookVerifyToken } from "@/lib/facebook/env";
-import { fetchFacebookLead, verifyFacebookSignature } from "@/lib/facebook/graph";
+import { facebookConfigStatus, facebookVerifyToken } from "@/lib/facebook/env";
+import {
+  fetchFacebookLead,
+  probeFacebookPageToken,
+  verifyFacebookSignature,
+} from "@/lib/facebook/graph";
 import { ingestFacebookLead } from "@/lib/facebook/ingest";
 import type { FacebookLeadgenEntry } from "@/lib/facebook/types";
 
 export const dynamic = "force-dynamic";
 
-/** Meta webhook verification (hub.challenge). */
+/**
+ * Meta webhook verification (hub.challenge) or ops health JSON.
+ * Health matches TikTok GET /api/tiktok/leads readiness shape (no secrets).
+ */
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const mode = url.searchParams.get("hub.mode");
@@ -20,6 +27,27 @@ export async function GET(request: Request) {
       headers: { "Content-Type": "text/plain" },
     });
   }
+
+  // Ops readiness (no hub params) — solar/TikTok-style status surface.
+  if (!mode && !token && !challenge) {
+    const status = facebookConfigStatus();
+    const probe = await probeFacebookPageToken();
+    return NextResponse.json({
+      ok: true,
+      service: "facebook-leadgen",
+      webhookVerifyReady: status.webhookVerifyReady,
+      leadFetchReady: status.leadFetchReady && probe.valid === true,
+      pageAccessTokenConfigured: status.pageAccessTokenConfigured,
+      pageAccessTokenValid: probe.valid,
+      pageAccessTokenErrorCode: probe.errorCode,
+      pageAccessTokenErrorType: probe.errorType,
+      pageAccessTokenMessage: probe.message,
+      allowSimulate: status.allowSimulate,
+      note:
+        "POST Meta leadgen here (FB+IG). PECR: ingest scores only — dial requires consent_to_call. Graph error 190 = denola must refresh FACEBOOK_PAGE_ACCESS_TOKEN.",
+    });
+  }
+
   return NextResponse.json({ error: "Verification failed" }, { status: 403 });
 }
 
