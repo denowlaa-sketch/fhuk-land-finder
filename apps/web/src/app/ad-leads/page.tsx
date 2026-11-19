@@ -69,7 +69,11 @@ export default async function AdLeadsPage({
           [
             [
               "Meta webhook (FB+IG)",
-              fb.webhookReady ? "ready" : "configure tokens",
+              fb.webhookVerifyReady
+                ? fb.leadFetchReady
+                  ? "verify + page token set"
+                  : "verify ready (page token missing)"
+                : "configure verify token",
             ],
             [
               "TikTok webhook",
@@ -79,7 +83,14 @@ export default async function AdLeadsPage({
                   : "verify ready (stub ingest)"
                 : "configure verify token",
             ],
-            ["Twilio live", twilio.ready ? "ready" : "sandbox only"],
+            [
+              "Twilio live",
+              twilio.ready
+                ? "ready"
+                : twilio.configured
+                  ? "sandbox only (LIVE_DIALS=false)"
+                  : "sandbox only",
+            ],
             [
               "Owner email",
               email.ready || Boolean(process.env.OWNER_NOTIFY_EMAIL)
@@ -156,8 +167,10 @@ export default async function AdLeadsPage({
 
       <p className="text-xs text-slate-500">
         Webhooks: <code>GET/POST /api/facebook/leadgen</code> (Meta FB+IG),{" "}
-        <code>GET/POST /api/tiktok/leads</code>. Live dials require{" "}
-        <code>TWILIO_LIVE_DIALS=true</code>. Never dial without{" "}
+        <code>GET/POST /api/tiktok/leads</code>. Ops health (no secrets):{" "}
+        <code>GET /api/facebook/leadgen</code> returns{" "}
+        <code>pageAccessTokenValid</code> (Graph 190 = refresh page token). Live
+        dials require <code>TWILIO_LIVE_DIALS=true</code>. Never dial without{" "}
         <code>consent_to_call</code>.
       </p>
     </>

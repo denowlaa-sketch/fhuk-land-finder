@@ -35,6 +35,11 @@ export function facebookConfigStatus() {
     pageAccessTokenConfigured: pageToken,
     appSecretConfigured: appSecret,
     allowSimulate: facebookAllowSimulate(),
+    /** Meta hub.verify_token challenge works with verify token alone. */
+    webhookVerifyReady: verifyToken,
+    /** Graph lead fetch for Instant Form answers needs page access token. */
+    leadFetchReady: pageToken,
+    /** Both verify + page token present (does not prove token is unexpired). */
     webhookReady: verifyToken && pageToken,
   };
 }
