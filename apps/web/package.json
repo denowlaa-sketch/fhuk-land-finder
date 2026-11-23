@@ -10,7 +10,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test:appraisal": "tsx --test src/lib/appraisal/calculate.test.ts"
+    "test:appraisal": "tsx --test src/lib/appraisal/calculate.test.ts src/lib/appraisal/quoteView.test.ts"
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.3.4",
