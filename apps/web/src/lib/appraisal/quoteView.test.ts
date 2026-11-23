@@ -1,45 +1,42 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { describeCouncil } from "./councilNotes";
-import { HESKETH_SCHEME, quoteView } from "./quoteView";
 import { normalizePostcode, postcodeSector } from "./lookupPostcode";
+import { emptySheet, evaluateSheet } from "./sheetCalc";
+import type { PostcodeLookup } from "./lookupPostcode";
 
-const emptyFacts = {
-  semiPrice: 250_000 as number | null,
-  detachedPrice: 300_000 as number | null,
-  cilRatePerM2: null as number | null,
-  existingBuildingM2: null as number | null,
-  s106: null as number | null,
-  buildSemiPerSqft: null as number | null,
-  buildDetachedPerSqft: null as number | null,
-  utilitiesPerUnit: null as number | null,
-  warrantyPerUnit: null as number | null,
-  buildingRegsPerUnit: null as number | null,
-  planningProvisional: null as number | null,
-  country: "England",
-  siteSentence: "This postcode is not on a published site.",
-  cilSentence: "No single rate.",
-  s106Sentence: "No tariff.",
-};
+function row(id: string, inputs = emptySheet(), lookup: PostcodeLookup | null = null) {
+  return evaluateSheet(inputs, lookup).rows.find((item) => item.id === id);
+}
 
-test("a blank build cost is not turned into a residual", () => {
-  const view = quoteView(HESKETH_SCHEME, emptyFacts);
-  assert.equal(view.gdv, 8 * 250_000 + 300_000);
-  assert.equal(view.residual, null);
-  assert.equal(view.lines.find((row) => row.id === "construction")?.amount, null);
-  assert.equal(view.lines.find((row) => row.id === "build")?.amount, null);
-  assert.equal(view.lines.find((row) => row.id === "cil")?.amount, null);
-  assert.equal(view.lines.find((row) => row.id === "s106")?.amount, null);
-  assert.equal(view.lines.find((row) => row.id === "planning")?.amount, 5_490);
-  assert.match(view.conclusion, /not on a published site/i);
-  assert.match(view.conclusion, /not confirmed/i);
-  assert.ok(view.missing.includes("build cost"));
+test("an empty sheet does not assume a unit mix or a residual", () => {
+  const view = evaluateSheet(emptySheet(), null);
+  assert.equal(row("gdv", emptySheet())?.result, "");
+  assert.equal(row("j58")?.result, "");
+  assert.equal(row("c94")?.result, "");
+  assert.match(row("c94")?.note ?? "", /J38 Section 106/);
+  assert.match(row("c94")?.note ?? "", /J58:J61 build cost/);
+  assert.equal(emptySheet().ht1Units, "");
+  assert.equal(emptySheet().ht2Units, "");
+  assert.doesNotMatch(view.rows.map((item) => item.note).join(" "), /8 semi/i);
 });
 
-test("a known CIL rate still needs existing floorspace", () => {
-  const view = quoteView(HESKETH_SCHEME, { ...emptyFacts, cilRatePerM2: 143.45 });
-  assert.equal(view.lines.find((row) => row.id === "cil")?.amount, null);
-  assert.ok(view.missing.includes("existing building floorspace"));
+test("a unit price without a count does not produce GDV", () => {
+  const inputs = { ...emptySheet(), houseType: "terraced" as const, ht1Price: "250000" };
+  assert.equal(row("gdv", inputs)?.result, "");
+  assert.equal(row("j23", inputs)?.result, "");
+});
+
+test("the planning fee uses the typed unit count, not a fixed nine homes", () => {
+  const inputs = { ...emptySheet(), ht1Units: "4", ht1Sqft: "800", ht1Price: "200000" };
+  const lookup = { country: "England" } as PostcodeLookup;
+  assert.equal(row("gdv", inputs, lookup)?.result, "£800,000.00");
+  assert.equal(row("j23", inputs, lookup)?.result, "£2,440.00");
+});
+
+test("a typed CIL rate still needs existing floorspace and a floor area", () => {
+  const inputs = { ...emptySheet(), cilRate: "100", ht1Units: "1", ht1Price: "100000" };
+  assert.equal(row("j39", inputs)?.result, "");
 });
 
 test("West Lancashire notes do not apply a zone rate or a legal fee as Section 106", () => {
@@ -79,7 +76,7 @@ test("a council outside West Lancashire does not inherit the £143.45 rate", () 
   assert.match(notes.cilSummary, /no community infrastructure levy/i);
   assert.match(notes.cilSummary, /143\.45/);
   assert.match(notes.siteSummary, /not on a published housing site/i);
-  assert.match(notes.siteSummary, /403/);
+  assert.match(notes.siteSummary, /manchester\.gov\.uk returned 403/);
 });
 
 test("postcode sector is the outward code plus the first inward digit", () => {

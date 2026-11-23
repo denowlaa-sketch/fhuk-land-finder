@@ -6,7 +6,7 @@ export default function AppraisalPage() {
     <div className="mx-auto max-w-5xl">
       <PageHeader
         title="Appraisal"
-        description="Enter a UK postcode. Sale prices come from Land Registry Price Paid. CIL, Section 106, and housing-land notes come only from the local planning authority’s published pages. A blank cost stays blank."
+        description="Type a land address, postcode, and house type. The sheet follows the BuildUp template. A cell is filled only when a cited source states the figure. The other cells stay blank until you type them or link a source."
       />
       <PostcodeAppraisal />
     </div>

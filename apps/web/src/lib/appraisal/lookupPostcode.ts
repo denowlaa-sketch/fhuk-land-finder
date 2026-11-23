@@ -1,3 +1,4 @@
+import { isHouseType, houseTypeLabel } from "./quoteView";
 import { RETRIEVED_ON } from "./scenarios";
 import {
   describeCouncil,
@@ -11,7 +12,8 @@ export interface Sale {
   postcode: string;
   price: number;
   date: string;
-  type: "semi-detached" | "detached";
+  type: string;
+  onThisAddress: boolean;
 }
 
 export interface PostcodeLookup {
@@ -28,10 +30,10 @@ export interface PostcodeLookup {
   builtUpArea: string | null;
   country: string | null;
   website: string | null;
-  semiPrice: number | null;
-  detachedPrice: number | null;
-  semis: Sale[];
-  detached: Sale[];
+  address: string;
+  houseType: string;
+  unitPrice: number | null;
+  sales: Sale[];
   salesError: string | null;
   cilRatePerM2: number | null;
   cilSummary: string;
@@ -160,7 +162,12 @@ async function sampleAround(postcode: string, latitude: number, longitude: numbe
   return [...codes];
 }
 
-function salesQuery(postcodes: string[]): string {
+function typeFilter(houseType: string): string {
+  if (houseType === "flat-maisonette") return 'FILTER(CONTAINS(LCASE(STR(?ptype)), "flat"))';
+  return `FILTER(STR(?ptype) = "${houseType}")`;
+}
+
+function salesQuery(postcodes: string[], houseType: string): string {
   const branches = postcodes
     .map(
       (code) => `{
@@ -182,16 +189,27 @@ SELECT ?paon ?street ?postcode ?amount ?date ?ptype ?category WHERE {
           lrppi:propertyType/skos:prefLabel ?ptype .
   OPTIONAL { ?transx lrppi:transactionCategory/skos:prefLabel ?category }
   FILTER(?date >= "2023-01-01"^^xsd:date)
-  FILTER(STR(?ptype) = "semi-detached" || STR(?ptype) = "detached")
+  ${typeFilter(houseType)}
   OPTIONAL { ?addr lrcommon:paon ?paon }
   OPTIONAL { ?addr lrcommon:street ?street }
 } LIMIT 80
 `;
 }
 
+function onThisAddress(saleAddress: string, typed: string): boolean {
+  const street = saleAddress.replace(/^[0-9A-Z]+\s+/i, "").trim().toUpperCase();
+  const paon = saleAddress.split(" ")[0]?.toUpperCase() ?? "";
+  const haystack = typed.toUpperCase();
+  if (street.length < 4 || !haystack.includes(street)) return false;
+  if (!paon) return false;
+  return new RegExp(`(^|\\s)${paon.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(\\s|$)`).test(haystack);
+}
+
 async function runSalesQuery(
   query: string,
-): Promise<{ semis: Sale[]; detached: Sale[]; error: string | null }> {
+  houseType: string,
+  address: string,
+): Promise<{ sales: Sale[]; error: string | null }> {
   let lastStatus = 0;
   for (let attempt = 0; attempt < 3; attempt += 1) {
     const response = await fetch("https://landregistry.data.gov.uk/landregistry/query", {
@@ -210,34 +228,32 @@ async function runSalesQuery(
       continue;
     }
     if (!response.ok) {
-      return { semis: [], detached: [], error: `Land Registry returned HTTP ${response.status}.` };
+      return { sales: [], error: `Land Registry returned HTTP ${response.status}.` };
     }
     const payload = (await response.json()) as {
       results?: { bindings?: Record<string, { value: string }>[] };
     };
-    const semis: Sale[] = [];
-    const detached: Sale[] = [];
+    const sales: Sale[] = [];
     for (const row of payload.results?.bindings ?? []) {
-      const type = row.ptype?.value;
+      const type = row.ptype?.value ?? houseType;
       const category = (row.category?.value ?? "").toLowerCase();
       if (category && !category.includes("standard")) continue;
-      if (type !== "semi-detached" && type !== "detached") continue;
+      const saleAddress = [row.paon?.value, row.street?.value].filter(Boolean).join(" ") || "Address not stated";
       const sale: Sale = {
-        address: [row.paon?.value, row.street?.value].filter(Boolean).join(" ") || "Address not stated",
+        address: saleAddress,
         postcode: row.postcode?.value ?? "",
         price: Number(row.amount?.value),
         date: row.date?.value ?? "",
         type,
+        onThisAddress: onThisAddress(saleAddress, address),
       };
       if (!Number.isFinite(sale.price)) continue;
-      if (type === "semi-detached") semis.push(sale);
-      else detached.push(sale);
+      sales.push(sale);
     }
-    return { semis, detached, error: null };
+    return { sales, error: null };
   }
   return {
-    semis: [],
-    detached: [],
+    sales: [],
     error: `Land Registry returned HTTP ${lastStatus || 429}. Sale prices were not filled.`,
   };
 }
@@ -246,9 +262,15 @@ async function pricePaid(
   postcode: string,
   latitude: number,
   longitude: number,
-): Promise<{ semis: Sale[]; detached: Sale[]; error: string | null; radius: string }> {
-  const sales = await runSalesQuery(salesQuery(await sampleAround(postcode, latitude, longitude)));
-  return { ...sales, radius: "at the postcode and about 1 km and 3 km away" };
+  houseType: string,
+  address: string,
+): Promise<{ sales: Sale[]; error: string | null; radius: string }> {
+  const found = await runSalesQuery(
+    salesQuery(await sampleAround(postcode, latitude, longitude), houseType),
+    houseType,
+    address,
+  );
+  return { ...found, radius: "at the postcode and about 1 km and 3 km away" };
 }
 
 async function websiteStatus(url: string | null): Promise<number | null> {
@@ -276,10 +298,21 @@ function asSites(entities: PlanningEntity[]): HousingSiteHit[] {
     }));
 }
 
-export async function lookupPostcode(raw: string): Promise<PostcodeLookup> {
+export async function lookupPostcode(raw: string, address: string, houseType: string): Promise<PostcodeLookup> {
   const postcode = normalizePostcode(raw);
+  const site = address.trim();
   if (!postcode) {
     const error = new Error("Enter a UK postcode.");
+    (error as Error & { status?: number }).status = 400;
+    throw error;
+  }
+  if (site.length < 3) {
+    const error = new Error("Enter the land address.");
+    (error as Error & { status?: number }).status = 400;
+    throw error;
+  }
+  if (!isHouseType(houseType)) {
+    const error = new Error("Choose a house type.");
     (error as Error & { status?: number }).status = 400;
     throw error;
   }
@@ -340,9 +373,8 @@ export async function lookupPostcode(raw: string): Promise<PostcodeLookup> {
           limit: "10",
         }).catch(() => [] as PlanningEntity[])
       : Promise.resolve([] as PlanningEntity[]),
-    pricePaid(postcode, latitude, longitude).catch((error: unknown) => ({
-      semis: [] as Sale[],
-      detached: [] as Sale[],
+    pricePaid(postcode, latitude, longitude, houseType, site).catch((error: unknown) => ({
+      sales: [] as Sale[],
       error: error instanceof Error ? error.message : "Price Paid could not be read.",
       radius: "not retrieved",
     })),
@@ -381,10 +413,10 @@ export async function lookupPostcode(raw: string): Promise<PostcodeLookup> {
     {
       label: "HM Land Registry Price Paid Data",
       url: "https://landregistry.data.gov.uk/landregistry/query",
-      date: `Standard semi-detached and detached sales ${sales.radius} since 1 January 2023, retrieved ${RETRIEVED_ON}`,
+      date: `Standard ${houseTypeLabel(houseType)} sales ${sales.radius} since 1 January 2023, retrieved ${RETRIEVED_ON}`,
       value: sales.error
         ? sales.error
-        : `${sales.semis.length} semi-detached and ${sales.detached.length} detached sales.`,
+        : `${sales.sales.length} ${houseTypeLabel(houseType)} sales. ${sales.sales.filter((sale) => sale.onThisAddress).length} match the typed address.`,
     },
     {
       label: "Planning application fees in England from 1 April 2026",
@@ -409,10 +441,10 @@ export async function lookupPostcode(raw: string): Promise<PostcodeLookup> {
     builtUpArea: builtUp?.name ?? null,
     country: typeof result.country === "string" ? result.country : null,
     website: authority?.website ?? null,
-    semiPrice: average(sales.semis),
-    detachedPrice: average(sales.detached),
-    semis: sales.semis,
-    detached: sales.detached,
+    address: site,
+    houseType,
+    unitPrice: average(sales.sales),
+    sales: sales.sales,
     salesError: sales.error,
     cilRatePerM2: notes.cilRatePerM2,
     cilSummary: notes.cilSummary,

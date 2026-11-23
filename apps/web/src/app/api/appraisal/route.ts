@@ -3,9 +3,12 @@ import { lookupPostcode } from "@/lib/appraisal/lookupPostcode";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
-  const postcode = new URL(request.url).searchParams.get("postcode") ?? "";
+  const url = new URL(request.url);
+  const postcode = url.searchParams.get("postcode") ?? "";
+  const address = url.searchParams.get("address") ?? "";
+  const houseType = url.searchParams.get("houseType") ?? "";
   try {
-    const lookup = await lookupPostcode(postcode);
+    const lookup = await lookupPostcode(postcode, address, houseType);
     return Response.json(lookup);
   } catch (error) {
     const status = (error as { status?: number }).status;

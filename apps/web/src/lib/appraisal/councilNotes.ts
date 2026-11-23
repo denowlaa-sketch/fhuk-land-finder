@@ -100,7 +100,7 @@ export function describeCouncil(input: {
       siteSummary +=
         " West Lancashire’s current assessment is the SHELAA 2020/21. The settlement PDF for this postcode was not opened, so no allocation is claimed from it.";
     } else if (input.websiteStatus === 403) {
-      siteSummary += ` The council website returned 403, so its SHLAA or HELAA page was not read.`;
+      siteSummary += ` ${input.website ?? "The council website"} returned 403, so its SHLAA or HELAA page was not read.`;
     } else if (input.website) {
       siteSummary += ` No SHLAA or HELAA tariff or site for this postcode was read from ${input.website}.`;
     }

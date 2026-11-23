@@ -1,234 +1,284 @@
 import { planningFeeNewDwellings, SQFT_PER_M2 } from "./calculate";
 
-export interface Scheme {
-  semiUnits: number;
-  semiSqft: number;
-  detachedUnits: number;
-  detachedSqft: number;
-  targetProfit: number;
+export const HOUSE_TYPES = ["detached", "semi-detached", "terraced", "flat-maisonette"] as const;
+
+export type HouseType = (typeof HOUSE_TYPES)[number];
+
+export function isHouseType(value: string): value is HouseType {
+  return (HOUSE_TYPES as readonly string[]).includes(value);
 }
 
-/** The Hesketh sheet’s mix. Shown as an editable default, not as a fact about the postcode. */
-export const HESKETH_SCHEME: Scheme = {
-  semiUnits: 8,
-  semiSqft: 900,
-  detachedUnits: 1,
-  detachedSqft: 1000,
-  targetProfit: 0.2,
-};
+export function houseTypeLabel(type: HouseType): string {
+  if (type === "flat-maisonette") return "Flat / maisonette";
+  if (type === "semi-detached") return "Semi-detached";
+  return type.charAt(0).toUpperCase() + type.slice(1);
+}
 
-export interface QuoteFacts {
-  semiPrice: number | null;
-  detachedPrice: number | null;
+export interface SheetFacts {
+  address: string;
+  postcode: string;
+  houseType: HouseType;
+  authorityName: string;
+  /** Comparables F27. Average of the selected house type only. */
+  unitPrice: number | null;
+  /** Comparables C13. Null unless a source states a count for this address. */
+  units: number | null;
+  /** Base E13. Null unless a source states a floor area. */
+  sizeSqft: number | null;
   cilRatePerM2: number | null;
-  /** Unknown existing floorspace stays null. It is not assumed to be zero. */
   existingBuildingM2: number | null;
   s106: number | null;
-  buildSemiPerSqft: number | null;
-  buildDetachedPerSqft: number | null;
+  /** Build rate for the selected house type only. */
+  buildPerSqft: number | null;
   utilitiesPerUnit: number | null;
   warrantyPerUnit: number | null;
   buildingRegsPerUnit: number | null;
   planningProvisional: number | null;
   country: string | null;
-  siteSentence: string;
-  cilSentence: string;
-  s106Sentence: string;
+  priceDetail: string;
+  cilDetail: string;
+  s106Detail: string;
+  siteDetail: string;
+  buildDetail: string;
 }
 
-export interface QuoteLine {
-  id: string;
+export interface SheetCell {
+  section: string;
+  cell: string;
   label: string;
-  /** Pounds. Null means the figure was not filled. */
   amount: number | null;
-  /** Non-money display, such as a floor area. */
   text: string | null;
   detail: string;
 }
 
-export interface QuoteView {
-  dwellings: number;
-  gifaSqft: number;
-  gifaM2: number;
-  gdv: number | null;
-  lines: QuoteLine[];
-  residual: number | null;
-  profit: number | null;
-  profitOnGdv: number | null;
-  missing: string[];
+export interface SheetView {
+  cells: SheetCell[];
+  blankCells: string[];
   conclusion: string;
 }
 
-function priceFor(units: number, price: number | null): number | null {
-  if (units <= 0) return 0;
-  return price;
-}
-
-function line(
-  id: string,
+function cell(
+  section: string,
+  ref: string,
   label: string,
-  amount: number | null,
   detail: string,
+  amount: number | null = null,
   text: string | null = null,
-): QuoteLine {
-  return { id, label, amount, text, detail };
+): SheetCell {
+  return { section, cell: ref, label, amount, text, detail };
 }
 
-export function quoteView(scheme: Scheme, facts: QuoteFacts): QuoteView {
-  const dwellings = scheme.semiUnits + scheme.detachedUnits;
-  const gifaSqft = scheme.semiUnits * scheme.semiSqft + scheme.detachedUnits * scheme.detachedSqft;
-  const gifaM2 = gifaSqft / SQFT_PER_M2;
-  const semiPrice = priceFor(scheme.semiUnits, facts.semiPrice);
-  const detachedPrice = priceFor(scheme.detachedUnits, facts.detachedPrice);
-  const gdv =
-    semiPrice == null || detachedPrice == null
-      ? null
-      : scheme.semiUnits * semiPrice + scheme.detachedUnits * detachedPrice;
+function filled(row: SheetCell): boolean {
+  return row.amount != null || (row.text != null && row.text.length > 0);
+}
 
-  const planningFee = facts.country === "England" ? planningFeeNewDwellings(dwellings) : null;
-
-  const semiBuild =
-    scheme.semiUnits <= 0
-      ? 0
-      : facts.buildSemiPerSqft == null
-        ? null
-        : facts.buildSemiPerSqft * scheme.semiSqft * scheme.semiUnits;
-  const detachedBuild =
-    scheme.detachedUnits <= 0
-      ? 0
-      : facts.buildDetachedPerSqft == null
-        ? null
-        : facts.buildDetachedPerSqft * scheme.detachedSqft * scheme.detachedUnits;
-  const build = semiBuild == null || detachedBuild == null ? null : semiBuild + detachedBuild;
-  const utilities = facts.utilitiesPerUnit == null ? null : facts.utilitiesPerUnit * dwellings;
-  const construction = build == null || utilities == null ? null : build + utilities;
-  const contingency = construction == null ? null : construction * 0.1;
-  const feeBase = construction == null || contingency == null ? null : construction + contingency;
-  const professional = feeBase == null ? null : feeBase * (0.0075 + 0.005 + 0.025 + 0.02);
-  const warranty = facts.warrantyPerUnit == null ? null : facts.warrantyPerUnit * dwellings;
-  const buildingRegs =
-    facts.buildingRegsPerUnit == null ? null : facts.buildingRegsPerUnit * dwellings;
-  const agency = gdv == null ? null : gdv * 0.0125;
+export function quoteView(facts: SheetFacts): SheetView {
+  const typeLabel = houseTypeLabel(facts.houseType);
+  const gifaM2 = facts.units != null && facts.sizeSqft != null ? (facts.units * facts.sizeSqft) / SQFT_PER_M2 : null;
+  const gdv = facts.units != null && facts.unitPrice != null ? facts.units * facts.unitPrice : null;
+  const planningFee =
+    facts.country === "England" && facts.units != null ? planningFeeNewDwellings(facts.units) : null;
+  const build =
+    facts.buildPerSqft != null && facts.units != null && facts.sizeSqft != null
+      ? facts.buildPerSqft * facts.sizeSqft * facts.units
+      : null;
+  const utilities = facts.utilitiesPerUnit != null && facts.units != null ? facts.utilitiesPerUnit * facts.units : null;
+  const construction = build != null && utilities != null ? build + utilities : null;
   const cil =
-    facts.cilRatePerM2 == null || facts.existingBuildingM2 == null
-      ? null
-      : (gifaM2 - facts.existingBuildingM2) * facts.cilRatePerM2;
+    facts.cilRatePerM2 != null && facts.existingBuildingM2 != null && gifaM2 != null
+      ? (gifaM2 - facts.existingBuildingM2) * facts.cilRatePerM2
+      : null;
 
-  const missing: string[] = [];
-  if (gdv == null) missing.push("sale prices for every house type still in the mix");
-  if (facts.cilRatePerM2 == null) missing.push("a single CIL rate for this postcode");
-  if (facts.existingBuildingM2 == null) missing.push("existing building floorspace");
-  if (facts.s106 == null) missing.push("Section 106 contribution");
-  if (build == null) missing.push("build cost");
-  if (facts.utilitiesPerUnit == null) missing.push("utilities");
-  if (facts.warrantyPerUnit == null) missing.push("building warranty");
-  if (facts.buildingRegsPerUnit == null) missing.push("building regulations fees");
-  if (facts.planningProvisional == null) missing.push("planning provisional sum");
-  if (planningFee == null) missing.push("planning application fee");
-  missing.push("abnormal costs");
-
-  const lines: QuoteLine[] = [
-    line(
-      "gdv",
+  const cells: SheetCell[] = [
+    cell("Site", "Base B2", "Address", "Entered for this land. The workbook leaves this cell blank until a site is named.", null, facts.address),
+    cell("Site", "Postcode", "Postcode", facts.authorityName ? `Local authority: ${facts.authorityName}.` : "Local authority was not resolved.", null, facts.postcode),
+    cell(
+      "Revenue",
+      "House type 1",
+      "House type",
+      "The type you chose. Land Registry sales and the build-cost line are limited to this type.",
+      null,
+      typeLabel,
+    ),
+    cell(
+      "Revenue",
+      "Comparables C13",
+      "Units",
+      facts.units == null
+        ? "No SHLAA, HELAA, or planning page states how many homes this address can take. The count is not assumed."
+        : "Count stated for this address.",
+      facts.units,
+    ),
+    cell(
+      "Revenue",
+      "Base E13",
+      "Floor area per home",
+      facts.sizeSqft == null
+        ? "Price Paid does not publish floor area, and no council page stated one for this address."
+        : `${facts.sizeSqft} sq ft.`,
+      null,
+      facts.sizeSqft == null ? null : `${facts.sizeSqft.toLocaleString("en-GB")} sq ft`,
+    ),
+    cell(
+      "Revenue",
+      "Comparables F27",
+      `Unit price (${typeLabel})`,
+      facts.priceDetail,
+      facts.unitPrice,
+    ),
+    cell(
+      "Revenue",
+      "GDV",
       "Gross development value",
-      gdv,
       gdv == null
-        ? "Needs a Price Paid average for each house type that still has units."
-        : "Average standard sale price × the unit count you set, by semi-detached and detached.",
+        ? "Price × units. Blank because Comparables C13, Comparables F27, or both are blank."
+        : "Comparables F27 × Comparables C13. Other house types are not in the sum.",
+      gdv,
     ),
-    line(
-      "area",
-      "Floor area",
-      null,
-      "Sizes are the assumption below, not Land Registry floor areas. Square feet ÷ 10.764.",
-      `${gifaM2.toLocaleString("en-GB", { maximumFractionDigits: 2 })} m² (${gifaSqft.toLocaleString("en-GB")} sq ft)`,
+    cell(
+      "Revenue",
+      "Comparables C14:C16, F28:F30",
+      "House types 2–4",
+      "Blank. They are not the selected house type, so no second mix is filled in.",
     ),
-    line("cil", "CIL", cil, facts.cilSentence),
-    line("s106", "Section 106", facts.s106, facts.s106Sentence),
-    line(
-      "build",
-      "Build cost",
-      build,
-      build == null
-        ? "No published £ per square foot for this postcode. Not shown as zero."
-        : "Build rate × floor area for each house type.",
+    cell(
+      "Revenue",
+      "Comparables C8:C9",
+      "Affordable units",
+      "Blank. Tenure was not stated, so the affordable price stays blank.",
     ),
-    line(
-      "utilities",
-      "Utilities",
-      utilities,
-      utilities == null ? "No published per-dwelling utilities figure." : "Per dwelling × unit count.",
+    cell("Contributions", "Fact Find B3", "CIL rate", facts.cilDetail, facts.cilRatePerM2),
+    cell(
+      "Contributions",
+      "Fact Find B2",
+      "Existing building",
+      facts.existingBuildingM2 == null
+        ? "Blank. Existing floorspace was not published, and it is not assumed to be zero."
+        : "Existing floorspace stated for this address.",
+      facts.existingBuildingM2,
+      facts.existingBuildingM2 == null ? null : `${facts.existingBuildingM2} m²`,
     ),
-    line(
-      "construction",
+    cell(
+      "Contributions",
+      "CIL charge",
+      "CIL",
+      cil == null
+        ? "Blank. The charge needs Fact Find B3, Fact Find B2, and Base E13. A missing part is not treated as zero."
+        : "Open-market floor area minus existing floorspace, times the rate. Uses 10.764 sq ft per m².",
+      cil,
+    ),
+    cell("Contributions", "Base S106", "Section 106", facts.s106Detail, facts.s106),
+    cell("Construction", "Build rate", `Build cost £/sq ft (${typeLabel})`, facts.buildDetail, facts.buildPerSqft),
+    cell(
       "Construction",
-      construction,
+      "Build cost",
+      "Build cost",
+      build == null
+        ? "Blank. Needs the selected type’s £/sq ft, Base E13, and Comparables C13."
+        : "Rate × floor area × units, for the selected house type only.",
+      build,
+    ),
+    cell(
+      "Construction",
+      "Utilities",
+      "Utilities",
+      facts.utilitiesPerUnit == null
+        ? "Blank. No published per-dwelling utilities figure for this house type."
+        : "Per dwelling × Comparables C13.",
+      utilities,
+    ),
+    cell(
+      "Construction",
+      "Construction",
+      "Construction",
       "Build cost plus utilities. Blank if either part is blank.",
+      construction,
     ),
-    line(
-      "fees",
+    cell(
+      "Fees",
       "Professional fees",
-      professional,
-      "Architect 0.75%, engineer 0.5%, employer’s agent 2.5%, and project manager 2% of construction plus 10% contingency. Blank until construction is filled.",
+      "Professional fees",
+      "Template rates: architect 0.75%, engineer 0.5%, employer’s agent 2.5%, project manager 2% of construction plus 10% contingency. The pounds stay blank while construction is blank.",
     ),
-    line(
-      "warranty",
+    cell(
+      "Fees",
       "Warranty",
-      warranty,
-      warranty == null ? "No published per-dwelling warranty figure." : "Per dwelling × unit count.",
+      "Warranty",
+      facts.warrantyPerUnit == null
+        ? "Blank. No published per-dwelling warranty for this house type."
+        : "Per dwelling × units.",
+      facts.warrantyPerUnit != null && facts.units != null ? facts.warrantyPerUnit * facts.units : null,
     ),
-    line(
-      "bregs",
+    cell(
+      "Fees",
       "Building regulations",
-      buildingRegs,
-      buildingRegs == null
-        ? "No published per-dwelling building-regulations fee."
-        : "Per dwelling × unit count.",
+      "Building regulations",
+      facts.buildingRegsPerUnit == null
+        ? "Blank. No published per-dwelling building-regulations fee for this house type."
+        : "Per dwelling × units.",
+      facts.buildingRegsPerUnit != null && facts.units != null ? facts.buildingRegsPerUnit * facts.units : null,
     ),
-    line(
-      "planning",
+    cell(
+      "Fees",
+      "Base J23",
       "Planning application fee",
+      facts.units == null
+        ? "Blank because Comparables C13 is blank. The England schedule from 1 April 2026 is £610 per new dwelling under 10 homes and £659 each for 10 to 50. It is not applied to an assumed count."
+        : facts.country === "England"
+          ? "England fee for new dwellinghouses from 1 April 2026, times Comparables C13."
+          : "Blank. That schedule is for England.",
       planningFee,
-      facts.country === "England"
-        ? "England fee for new dwellinghouses in force from 1 April 2026, times the dwelling count. £610 each under 10 homes, £659 each for 10 to 50."
-        : "The April 2026 dwelling fee is an England schedule. This postcode is not in England, so the fee is blank.",
     ),
-    line(
-      "provisional",
+    cell(
+      "Fees",
+      "Base L22",
       "Planning provisional sum",
+      facts.planningProvisional == null
+        ? "Blank. The template’s typed provisional sum is not a published fee for this land."
+        : "Stated for this land.",
       facts.planningProvisional,
-      "The sheet’s £22,500 is a typed sum, not a published fee. Left blank.",
     ),
-    line("agency", "Estate agency", agency, "Sheet assumption of 1.25% of GDV, not a quoted agency fee."),
-    line("profit", "Profit", null, `A ${Math.round(scheme.targetProfit * 100)}% profit on GDV is the target. Profit is not calculated while costs are blank.`),
-    line(
-      "residual",
-      "Residual land value",
+    cell(
+      "Fees",
+      "Estate agency",
+      "Estate agency",
+      gdv == null
+        ? "Template rate 1.25% of GDV. Blank because GDV is blank."
+        : "Template rate 1.25% of GDV, not a quoted agency fee.",
+      gdv == null ? null : gdv * 0.0125,
+    ),
+    cell(
+      "Result",
+      "Base C93",
+      "Profit target",
+      "The template’s target is 20% of GDV. Profit in pounds is not calculated while GDV or the cost cells are blank.",
       null,
-      "Withheld. A residual that treated a blank cost as zero would overstate the land value.",
+      "20% of GDV",
+    ),
+    cell(
+      "Result",
+      "Base O89",
+      "Profit",
+      "GDV minus total costs. Blank while GDV or a cost cell is blank. A blank cost is not treated as zero.",
+    ),
+    cell(
+      "Result",
+      "Base C94",
+      "Residual land value",
+      "GDV × (1 − 20%) minus costs, adding back the land block and 1.25% of GDV. Withheld while a cost or GDV input is blank.",
     ),
   ];
 
-  const targetPct = `${Math.round(scheme.targetProfit * 100)}%`;
+  const blankCells = cells.filter((row) => !filled(row)).map((row) => row.cell);
   const conclusion = [
-    facts.siteSentence,
-    facts.cilSentence,
-    facts.s106Sentence,
-    `No residual land value is stated. A ${targetPct} profit on GDV is not confirmed because these inputs are blank and are not treated as zero: ${missing.join("; ")}.`,
+    `${facts.address}, ${facts.postcode}. House type: ${typeLabel}.`,
+    facts.siteDetail,
+    facts.cilDetail,
+    facts.s106Detail,
+    `No residual is stated in Base C94. A 20% profit on GDV is not confirmed. These cells are blank: ${blankCells.join("; ")}.`,
   ].join(" ");
 
-  return {
-    dwellings,
-    gifaSqft,
-    gifaM2,
-    gdv,
-    lines,
-    residual: null,
-    profit: null,
-    profitOnGdv: null,
-    missing,
-    conclusion,
-  };
+  return { cells, blankCells, conclusion };
 }
 
 export function formatGbp(value: number): string {
@@ -239,3 +289,5 @@ export function formatGbp(value: number): string {
     maximumFractionDigits: 2,
   }).format(value);
 }
+
+export { SQFT_PER_M2 };
