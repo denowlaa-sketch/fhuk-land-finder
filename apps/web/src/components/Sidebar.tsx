@@ -3,6 +3,7 @@
 import clsx from "clsx";
 import {
   Building2,
+  Calculator,
   Compass,
   LayoutDashboard,
   Megaphone,
@@ -17,6 +18,7 @@ const NAV = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/ad-leads", label: "Ad Leads / Calls", icon: Megaphone },
   { href: "/leads", label: "Leads", icon: ClipboardList },
+  { href: "/appraisal", label: "Appraisal", icon: Calculator },
   { href: "/discovery", label: "Discovery", icon: Compass },
   { href: "/companies", label: "Companies", icon: Building2, stub: true },
   { href: "/contacts", label: "Contacts", icon: Users, stub: true },

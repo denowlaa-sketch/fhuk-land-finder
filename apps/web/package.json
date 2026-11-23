@@ -9,7 +9,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:appraisal": "tsx --test src/lib/appraisal/calculate.test.ts"
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.3.4",
@@ -27,6 +28,7 @@
     "@types/pg": "^8.11.10",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "tsx": "^4.23.15",
     "typescript": "^5.7.0"
   }
 }
