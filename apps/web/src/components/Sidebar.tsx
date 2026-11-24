@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { LiveRefresh } from "@/components/LiveRefresh";
 
 const NAV = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -69,6 +70,7 @@ export function Sidebar() {
       </nav>
       <div className="border-t border-slate-700/80 px-4 py-3 text-[11px] text-slate-500">
         Ops CRM · no end-user auth
+        <LiveRefresh />
       </div>
     </aside>
   );
